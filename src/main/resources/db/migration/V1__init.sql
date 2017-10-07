@@ -16,12 +16,11 @@ CREATE TABLE Forum(
 );
 
 CREATE TABLE Thread(
-  id SERIAL PRIMARY KEY,
+  slug citext PRIMARY KEY,
   forum citext references Forum(slug),
   author citext references FUser(nickname),
   created timestamptz(6) DEFAULT now() NOT NULL,
   message citext NOT NULL,
-  slug citext NOT NULL UNIQUE,
   title citext NOT NULL,
   votes int DEFAULT 0
 );
@@ -30,12 +29,14 @@ CREATE TABLE Post(
   id SERIAL PRIMARY KEY,
   forum citext references Forum(slug),
   author citext references FUser(nickname),
+  thread citext references Thread(slug),
   created timestamptz(6) DEFAULT now() NOT NULL,
   isEdited bool DEFAULT false NOT NULL,
   message citext NOT NULL,
-  parent BIGINT NOT NULL DEFAULT 0,
-  thread int references Thread(id)
+  parent BIGINT NOT NULL DEFAULT 0
 );
+
+-- drop table forum, fuser, thread, post, schema_version;
 
 
 

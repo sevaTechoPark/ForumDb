@@ -6,10 +6,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import serverDb.thread.Thread;
-import serverDb.thread.ThreadRowMapper;
 import serverDb.user.User;
-import serverDb.user.UserRowMapper;
 
+import java.sql.Timestamp;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,16 @@ public class ForumService {
 
         final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum) VALUES(?,?,?,?,?,?)";
 
-        jdbcTemplate.update(sql, thread.getSlug(), thread.getTitle(), thread.getAuthor(), thread.getMessage(), thread.getCreated(), forum_slug);
+        Timestamp created;
+        if (thread.getCreated() == null) {
+            final ZonedDateTime zonedDateTime = ZonedDateTime.now();
+            created = Timestamp.valueOf(zonedDateTime.toLocalDateTime());
+        } else {
+            final Timestamp timestamp = new Timestamp(thread.getCreatedZonedDateTime().getLong(ChronoField.INSTANT_SECONDS) * 1000 + thread.getCreatedZonedDateTime().getLong(ChronoField.MILLI_OF_SECOND));
+            created = timestamp;
+        }
+
+        jdbcTemplate.update(sql, thread.getSlug(), thread.getTitle(), thread.getAuthor(), thread.getMessage(), created, forum_slug);
         thread.setForum(forum_slug);
 
         return new ResponseEntity(thread, HttpStatus.OK);
@@ -48,7 +58,6 @@ public class ForumService {
 
         Forum forum = (Forum) jdbcTemplate.queryForObject(
                 sql, new Object[] { slug }, new ForumRowMapper());
-        forum.setSlug(slug);
 
         return new ResponseEntity(forum, HttpStatus.OK);
 
@@ -62,14 +71,15 @@ public class ForumService {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, new Object[] { slug });
         for (Map row : rows) {
             Thread thread = new Thread();
-            thread.setId((int)row.get("id"));
+
             thread.setVotes((int)row.get("votes"));
-            thread.setTitle((String)row.get("created"));
+            thread.setCreated((String)row.get("created"));
             thread.setMessage((String)row.get("message"));
             thread.setSlug((String)row.get("slug"));
             thread.setTitle((String)row.get("title"));
             thread.setAuthor((String)row.get("author"));
             thread.setForum(slug);
+
             threads.add(thread);
         }
 

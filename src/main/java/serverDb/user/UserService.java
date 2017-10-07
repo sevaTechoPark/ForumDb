@@ -43,7 +43,6 @@ public class UserService{
         final String sql = "SELECT email, fullname, about from FUser WHERE nickname = ?";
         User user = (User) jdbcTemplate.queryForObject(
                 sql, new Object[] { nickname }, new UserRowMapper());
-        user.setNickname(nickname);
 
         return new ResponseEntity(user, HttpStatus.OK);
 

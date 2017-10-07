@@ -12,6 +12,7 @@ public class ForumRowMapper implements RowMapper {
         forum.setThreads(rs.getInt("threads"));
         forum.setTitle(rs.getString("title"));
         forum.setUser(rs.getString("user"));
+        forum.setSlug(rs.getString("slug"));
 
         return forum;
     }

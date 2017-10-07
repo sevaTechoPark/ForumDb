@@ -1,18 +1,22 @@
 package serverDb.thread;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Thread {
 
     private String author;
     private String forum;
-    private String created;
+    private ZonedDateTime created;
+    private String createdFromDb;
     private String message;
     private String slug;
     private String title;
     private int votes;
-    private int id;
 
     @JsonCreator
     public Thread(@JsonProperty("slug") String slug, @JsonProperty("author") String author,
@@ -23,9 +27,15 @@ public class Thread {
         this.author = author;
         this.message = message;
         this.title = title;
-        this.created = created;
+        if(created != null) {
+            this.created = ZonedDateTime.parse(created, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        } else {
+            this.created = null;
+        }
 
+        this.createdFromDb = null;
     }
+
 
     public Thread() {
 
@@ -39,12 +49,17 @@ public class Thread {
         return forum;
     }
 
-    public int getId() {
-        return id;
+
+    @JsonIgnore
+    public ZonedDateTime getCreatedZonedDateTime() {
+        return created;
     }
 
     public String getCreated() {
-        return created;
+        if (createdFromDb != null) {
+            return createdFromDb;
+        }
+        return created.toString();
     }
 
     public String getMessage() {
@@ -71,12 +86,10 @@ public class Thread {
         this.forum = forum;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
 
+//for ThreadRowMapper.
     public void setCreated(String created) {
-        this.created = created;
+        this.createdFromDb = created;
     }
 
     public void setMessage(String message) {
