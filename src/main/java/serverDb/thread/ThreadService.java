@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import serverDb.Post.Post;
+import serverDb.Post.PostRowMapper;
 
 
 import java.sql.PreparedStatement;
@@ -93,22 +94,7 @@ public class ThreadService {
 
         final String sql = "SELECT * from Post WHERE thread = ?";
 
-        List<Post> posts = new ArrayList<Post>();
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, new Object[] { slug_or_id });
-        for (Map row : rows) {
-            Post post = new Post();
-
-            post.setId((int)row.get("id"));
-            post.setForum((String)row.get("forum"));
-            post.setAuthor((String)row.get("author"));
-            post.setThread(slug_or_id);
-            post.setCreated((String)row.get("created"));
-            post.setEdited((boolean)row.get("isEdited"));
-            post.setMessage((String)row.get("message"));
-            post.setParent((long)row.get("parent"));
-
-            posts.add(post);
-        }
+        List<Post> posts = jdbcTemplate.query(sql, new Object[] { slug_or_id }, new PostRowMapper());
 
         return new ResponseEntity(posts, HttpStatus.OK);
 

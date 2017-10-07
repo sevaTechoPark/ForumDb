@@ -6,7 +6,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import serverDb.thread.Thread;
+import serverDb.thread.ThreadRowMapper;
 import serverDb.user.User;
+import serverDb.user.UserRowMapper;
 
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
@@ -67,21 +69,7 @@ public class ForumService {
 
         final String sql = "SELECT * from Thread WHERE forum = ?";
 
-        List<Thread> threads = new ArrayList<Thread>();
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, new Object[] { slug });
-        for (Map row : rows) {
-            Thread thread = new Thread();
-
-            thread.setVotes((int)row.get("votes"));
-            thread.setCreated((String)row.get("created"));
-            thread.setMessage((String)row.get("message"));
-            thread.setSlug((String)row.get("slug"));
-            thread.setTitle((String)row.get("title"));
-            thread.setAuthor((String)row.get("author"));
-            thread.setForum(slug);
-
-            threads.add(thread);
-        }
+        List<Thread> threads = jdbcTemplate.query(sql, new Object[] { slug }, new ThreadRowMapper());
 
         return new ResponseEntity(threads, HttpStatus.OK);
 
@@ -91,16 +79,7 @@ public class ForumService {
         // или пост
         final String sql = "SELECT DISTINCT nickname, email, about, fullname from FUser JOIN Thread on(author = nickname) where forum = ?";
 
-        List<User> users = new ArrayList<User>();
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, new Object[] { slug });
-        for (Map row : rows) {
-            User user = new User();
-            user.setEmail((String)row.get("email"));
-            user.setAbout((String)row.get("about"));
-            user.setFullname((String)row.get("fullname"));
-            user.setNickname((String)row.get("nickname"));
-            users.add(user);
-        }
+        List<User> users = jdbcTemplate.query(sql, new Object[] { slug }, new UserRowMapper());
 
         return new ResponseEntity(users, HttpStatus.OK);
 

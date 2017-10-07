@@ -9,6 +9,7 @@ import java.sql.SQLException;
 public class PostRowMapper implements RowMapper {
     public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
         Post post = new Post();
+
         post.setId(rs.getInt("id"));
         post.setParent(rs.getLong("parent"));
         post.setEdited(rs.getBoolean("isEdited"));

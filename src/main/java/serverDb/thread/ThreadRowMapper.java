@@ -9,6 +9,7 @@ import java.sql.SQLException;
 public class ThreadRowMapper implements RowMapper {
     public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
         Thread thread = new Thread();
+
         thread.setVotes(rs.getInt("votes"));
         thread.setCreated(rs.getString("created"));
         thread.setMessage(rs.getString("message"));
