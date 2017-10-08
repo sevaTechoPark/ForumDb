@@ -10,10 +10,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class User {
 
-    private String nickname;
     private String email;
-    private String fullname;
     private String about;
+    private String fullname;
+    private String nickname;
 
     @JsonCreator
     public User(@JsonProperty("email") String email, @JsonProperty("about") String about,
@@ -29,36 +29,36 @@ public class User {
 
     }
 
-    public String getNickname() {
-        return nickname;
-    }
-
     public String getEmail() {
         return email;
-    }
-
-    public String getFullname() {
-        return fullname;
     }
 
     public String getAbout() {
         return about;
     }
 
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
+    public String getFullname() {
+        return fullname;
+    }
+
+    public String getNickname() {
+        return nickname;
     }
 
     public void setEmail(String email) {
         this.email = email;
     }
 
+    public void setAbout(String about) {
+        this.about = about;
+    }
+
     public void setFullname(String fullname) {
         this.fullname = fullname;
     }
 
-    public void setAbout(String about) {
-        this.about = about;
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 
     @JsonIgnore
@@ -66,10 +66,10 @@ public class User {
         final ObjectMapper map = new ObjectMapper();
         final ObjectNode node = map.createObjectNode();
 
-        node.put("nickname", this.nickname);
         node.put("email", this.email);
-        node.put("fullname", this.fullname);
         node.put("about", this.about);
+        node.put("fullname", this.fullname);
+        node.put("nickname", this.nickname);
 
         return node;
     }
