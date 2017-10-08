@@ -1,6 +1,7 @@
 package serverDb.thread;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -9,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import serverDb.Post.Post;
 import serverDb.Post.PostRowMapper;
+import serverDb.vote.Vote;
 
 
 import java.sql.PreparedStatement;
@@ -67,7 +69,7 @@ public class ThreadService {
 
     public ResponseEntity renameThread(String slug_or_id, Thread thread) {
 
-        final String sql = "UPDATE thread SET message = ?, title = ? WHERE slug = ?";
+        final String sql = "UPDATE Thread SET message = ?, title = ? WHERE slug = ?";
 
         int rowsAffected = jdbcTemplate.update(sql, thread.getMessage(), thread.getTitle(), slug_or_id);
         if (rowsAffected == 0) {
@@ -76,6 +78,46 @@ public class ThreadService {
 
         return new ResponseEntity("{}", HttpStatus.OK);
 
+    }
+
+    public ResponseEntity voteThread(String slug_or_id, Vote vote) {
+
+        int voiceForUpdate = vote.getVoice();
+
+        final String sqlFindVote = "SELECT voice from Vote WHERE nickname = ? AND thread = ?";
+
+        try {   // user has voted
+
+            final int voice = (int) jdbcTemplate.queryForObject(
+                    sqlFindVote, new Object[]{vote.getNickname(), slug_or_id}, Integer.class);
+
+            if (vote.getVoice() == voice) { // his voice doesn't change
+                return new ResponseEntity(vote, HttpStatus.OK);
+
+            } else {    // voice changed.
+
+                final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE nickname = ? AND thread = ?";
+                jdbcTemplate.update(sqlUpdateVote, vote.getVoice(), vote.getNickname(), slug_or_id);
+
+                voiceForUpdate = voice * (-2);  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
+
+            }
+
+        } catch (EmptyResultDataAccessException e) {    // user hasn't voted
+
+            final String sqlInsertVote = "INSERT INTO Vote(nickname, voice, thread) VALUES(?,?,?)";
+
+            jdbcTemplate.update(sqlInsertVote, new Object[]{vote.getNickname(), vote.getVoice(), slug_or_id});
+        }
+
+        final String sql = "UPDATE Thread SET votes = votes + ? WHERE slug = ?";
+
+        int rowsAffected = jdbcTemplate.update(sql, voiceForUpdate, slug_or_id);
+        if (rowsAffected == 0) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity(vote, HttpStatus.OK);
     }
 
     public ResponseEntity getThread(String slug_or_id) {

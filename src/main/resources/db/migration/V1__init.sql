@@ -10,8 +10,8 @@ CREATE TABLE FUser(
 CREATE TABLE Forum(
   slug citext NOT NULL PRIMARY KEY,
   "user" citext references FUser(nickname),
-  posts bigint DEFAULT 0,
-  threads int DEFAULT 0,
+  posts INT8 DEFAULT 0,
+  threads INT4 DEFAULT 0,
   title citext NOT NULL
 );
 
@@ -22,7 +22,7 @@ CREATE TABLE Thread(
   created timestamptz(6) DEFAULT now() NOT NULL,
   message citext NOT NULL,
   title citext NOT NULL,
-  votes int DEFAULT 0
+  votes INT4 DEFAULT 0
 );
 
 CREATE TABLE Post(
@@ -33,10 +33,15 @@ CREATE TABLE Post(
   created timestamptz(6) DEFAULT now() NOT NULL,
   isEdited bool DEFAULT false NOT NULL,
   message citext NOT NULL,
-  parent BIGINT NOT NULL DEFAULT 0
+  parent INT8 NOT NULL DEFAULT 0
 );
 
--- drop table forum, fuser, thread, post, schema_version;
+CREATE TABLE Vote(
+  id SERIAL PRIMARY KEY,
+  nickname citext references FUser(nickname),
+  thread citext references Thread(slug),
+  voice INT2 NOT NULL
+);
 
 
 
