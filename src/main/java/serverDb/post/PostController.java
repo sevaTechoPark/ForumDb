@@ -26,7 +26,11 @@ public class PostController {
 
 
     @GetMapping(path = "/{id}/details")
-    public ResponseEntity getPost(@PathVariable("id") int id, @RequestParam("related") String[] related) {
+    public ResponseEntity getPost(@PathVariable("id") int id, @RequestParam(value = "related", required = false) String[] related) {
+
+        if (related == null) {
+            related = new String[0];
+        }
 
         return postService.getPost(id, related);
     }
