@@ -8,8 +8,8 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import serverDb.Post.Post;
-import serverDb.Post.PostRowMapper;
+import serverDb.post.Post;
+import serverDb.post.PostRowMapper;
 import serverDb.vote.Vote;
 
 
@@ -17,9 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class ThreadService {
@@ -84,10 +82,9 @@ public class ThreadService {
 
         int voiceForUpdate = vote.getVoice();
 
-        final String sqlFindVote = "SELECT voice from Vote WHERE nickname = ? AND thread = ?";
-
         try {   // user has voted
 
+            final String sqlFindVote = "SELECT voice from Vote WHERE nickname = ? AND thread = ?";
             final int voice = (int) jdbcTemplate.queryForObject(
                     sqlFindVote, new Object[]{vote.getNickname(), slug_or_id}, Integer.class);
 
@@ -123,23 +120,18 @@ public class ThreadService {
     public ResponseEntity getThread(String slug_or_id) {
 
         final String sql = "SELECT * from Thread WHERE slug = ?";
-
         Thread thread = (Thread) jdbcTemplate.queryForObject(
                 sql, new Object[] { slug_or_id }, new ThreadRowMapper());
 
-
         return new ResponseEntity(thread, HttpStatus.OK);
-
     }
 
     public ResponseEntity getPosts(String slug_or_id, String limit, String since, String sort, String desc) {
 
         final String sql = "SELECT * from Post WHERE thread = ?";
-
         List<Post> posts = jdbcTemplate.query(sql, new Object[] { slug_or_id }, new PostRowMapper());
 
         return new ResponseEntity(posts, HttpStatus.OK);
-
     }
 
 }

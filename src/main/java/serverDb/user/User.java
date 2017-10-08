@@ -2,7 +2,10 @@ package serverDb.user;
 
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 
 public class User {
@@ -58,5 +61,17 @@ public class User {
         this.about = about;
     }
 
+    @JsonIgnore
+    public ObjectNode getJson(){
+        final ObjectMapper map = new ObjectMapper();
+        final ObjectNode node = map.createObjectNode();
+
+        node.put("nickname", this.nickname);
+        node.put("email", this.email);
+        node.put("fullname", this.fullname);
+        node.put("about", this.about);
+
+        return node;
+    }
 }
 

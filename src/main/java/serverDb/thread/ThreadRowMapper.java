@@ -13,6 +13,7 @@ public class ThreadRowMapper implements RowMapper {
         thread.setVotes(rs.getInt("votes"));
         thread.setCreated(rs.getString("created"));
         thread.setMessage(rs.getString("message"));
+        thread.setForum(rs.getString("forum"));
         thread.setTitle(rs.getString("title"));
         thread.setAuthor(rs.getString("author"));
         thread.setSlug(rs.getString("slug"));

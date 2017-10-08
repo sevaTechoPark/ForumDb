@@ -1,12 +1,11 @@
 package serverDb.thread;
 
+import serverDb.post.Post;
+import serverDb.vote.Vote;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import serverDb.Post.Post;
-import serverDb.forum.Forum;
-import serverDb.vote.Vote;
 
 import java.util.List;
 

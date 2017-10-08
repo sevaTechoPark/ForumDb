@@ -23,8 +23,7 @@ public class UserController {
 
         user.setNickname(nickname);
 
-       return userService.createUser(user);
-
+        return userService.createUser(user);
     }
 
     @PostMapping(path = "/{nickname}/profile")
@@ -33,15 +32,12 @@ public class UserController {
         user.setNickname(nickname);
 
         return userService.renameUser(user);
-
     }
 
     @GetMapping(path = "/{nickname}/profile")
     public ResponseEntity getUser(@PathVariable("nickname") String nickname) {
 
-
         return userService.getUser(nickname);
-
     }
 
 }

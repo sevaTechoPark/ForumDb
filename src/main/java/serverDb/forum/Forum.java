@@ -2,7 +2,10 @@ package serverDb.forum;
 
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 
 public class Forum {
@@ -68,4 +71,18 @@ public class Forum {
         this.posts = posts;
     }
 
+    @JsonIgnore
+    public ObjectNode getJson(){
+        final ObjectMapper map = new ObjectMapper();
+        final ObjectNode node = map.createObjectNode();
+
+        node.put("user", this.user);
+        node.put("title", this.title);
+        node.put("slug", this.slug);
+        node.put("threads", this.threads);
+        node.put("posts", this.posts);
+
+
+        return node;
+    }
 }

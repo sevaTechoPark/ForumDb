@@ -1,4 +1,4 @@
-package serverDb.Post;
+package serverDb.post;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,19 +19,16 @@ public class PostController {
 
 
     @PostMapping(path = "/{id}/details")
-    public ResponseEntity editMessage(@PathVariable("id") String id, @RequestBody Post post) {
+    public ResponseEntity editMessage(@PathVariable("id") int id, @RequestBody Post post) {
 
         return postService.editMessage(id, post);
-
     }
 
 
     @GetMapping(path = "/{id}/details")
-    public ResponseEntity getThreadsInfo(@PathVariable("id") String id, @RequestParam("limit") String[] related) {
-
+    public ResponseEntity getThreadsInfo(@PathVariable("id") int id, @RequestParam("related") String[] related) {
 
         return postService.getThreadsInfo(id, related);
-
     }
 
 
