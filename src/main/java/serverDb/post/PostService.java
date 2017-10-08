@@ -40,7 +40,7 @@ public class PostService {
     }
 
     public ResponseEntity getThreadsInfo(int id, String[] related) {
-        
+
         final ObjectMapper map = new ObjectMapper();
         final ObjectNode responseBody = map.createObjectNode();
 

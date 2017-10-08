@@ -42,6 +42,3 @@ CREATE TABLE Vote(
   thread citext references Thread(slug),
   voice INT2 NOT NULL
 );
-
-
-
