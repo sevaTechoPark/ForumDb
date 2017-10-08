@@ -20,6 +20,8 @@ public class Thread {
     private String title;
     private int votes;
 
+    private boolean isParent;
+
     @JsonCreator
     public Thread(@JsonProperty("slug") String slug, @JsonProperty("author") String author,
                   @JsonProperty("message") String message, @JsonProperty("title") String title,
@@ -51,6 +53,10 @@ public class Thread {
         return forum;
     }
 
+    public boolean getIsParent() {
+        return isParent;
+    }
+
 
     @JsonIgnore
     public ZonedDateTime getCreatedZonedDateTime() {
@@ -70,6 +76,10 @@ public class Thread {
 
     public String getSlug() {
         return slug;
+    }
+
+    public void setParent(boolean parent) {
+        isParent = parent;
     }
 
     public String getTitle() {

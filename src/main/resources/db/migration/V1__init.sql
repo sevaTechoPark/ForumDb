@@ -22,7 +22,8 @@ CREATE TABLE Thread(
   created timestamptz(6) DEFAULT now() NOT NULL,
   message citext NOT NULL,
   title citext NOT NULL,
-  votes INT4 DEFAULT 0
+  votes INT4 DEFAULT 0,
+  isParent bool DEFAULT false NOT NULL
 );
 
 CREATE TABLE Post(

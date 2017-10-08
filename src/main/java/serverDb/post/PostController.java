@@ -26,9 +26,9 @@ public class PostController {
 
 
     @GetMapping(path = "/{id}/details")
-    public ResponseEntity getThreadsInfo(@PathVariable("id") int id, @RequestParam("related") String[] related) {
+    public ResponseEntity getPost(@PathVariable("id") int id, @RequestParam("related") String[] related) {
 
-        return postService.getThreadsInfo(id, related);
+        return postService.getPost(id, related);
     }
 
 

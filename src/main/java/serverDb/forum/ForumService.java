@@ -2,8 +2,8 @@ package serverDb.forum;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
-
 import org.springframework.dao.EmptyResultDataAccessException;
+
 import serverDb.error.Error;
 import serverDb.thread.Thread;
 import serverDb.thread.ThreadRowMapper;
@@ -12,14 +12,18 @@ import serverDb.user.UserRowMapper;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import org.springframework.jdbc.core.JdbcTemplate;
+
 import java.sql.Timestamp;
+
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
+
 import java.util.List;
 
 @Service
@@ -119,7 +123,7 @@ public class ForumService {
         try {
 
             final String sqlCheckForum = "SELECT slug from Forum WHERE slug = ?";
-            jdbcTemplate.queryForObject(sqlCheckForum, new Object[]{slug}, String.class);
+            jdbcTemplate.queryForObject(sqlCheckForum, new Object[]{ slug }, String.class);
 
         } catch (EmptyResultDataAccessException e) {
 
@@ -138,7 +142,7 @@ public class ForumService {
         try {
 
             final String sqlCheckForum = "SELECT slug from Forum WHERE slug = ?";
-            jdbcTemplate.queryForObject(sqlCheckForum, new Object[]{slug}, String.class);
+            jdbcTemplate.queryForObject(sqlCheckForum, new Object[]{ slug }, String.class);
 
         } catch (EmptyResultDataAccessException e) {
 

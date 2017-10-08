@@ -17,6 +17,7 @@ public class ThreadRowMapper implements RowMapper {
         thread.setTitle(rs.getString("title"));
         thread.setAuthor(rs.getString("author"));
         thread.setSlug(rs.getString("slug"));
+        thread.setParent(rs.getBoolean("isParent"));
 
         return thread;
     }
