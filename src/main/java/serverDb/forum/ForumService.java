@@ -21,9 +21,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.Timestamp;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -118,7 +122,7 @@ public class ForumService {
 
     }
 
-    public ResponseEntity getThreads(String slug, String limit, String since, String desc) {
+    public ResponseEntity getThreads(String slug, Integer limit, String since, Boolean desc) throws ParseException {
 
         try {
 
@@ -131,13 +135,35 @@ public class ForumService {
                     HttpStatus.NOT_FOUND);
         }
 
-        final String sql = "SELECT * from Thread WHERE forum = ?";
-        List<Thread> threads = jdbcTemplate.query(sql, new Object[] { slug }, new ThreadRowMapper());
+        final StringBuilder sql = new StringBuilder("SELECT * from Thread WHERE forum = ?");
+        final List<Object> args = new ArrayList<>();
+        args.add(slug);
+
+        if (since != null) {
+            sql.append(" AND created");
+            if (desc == Boolean.TRUE) {
+                sql.append(" >");
+
+            } else {
+                sql.append(" <");
+            }
+            sql.append(" = '" + since + "' ");
+        }
+        sql.append(" ORDER BY created");
+        if (desc == Boolean.TRUE) {
+            sql.append(" DESC");
+        }
+        if (limit != null) {
+            sql.append(" LIMIT ?");
+            args.add(limit.intValue());
+        }
+
+        List<Thread> threads = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), new ThreadRowMapper());
 
         return new ResponseEntity(threads, HttpStatus.OK);
     }
 
-    public ResponseEntity getUsers(String slug, String limit, String since, String desc) {
+    public ResponseEntity getUsers(String slug, Integer limit, String since, Boolean desc) {
 
         try {
 
@@ -151,14 +177,40 @@ public class ForumService {
         }
 
 //      Получение списка пользователей, у которых есть пост или ветка обсуждения в данном форуме.
-//      Скорее всего будет выводить дважды пользователей которые и ветку создавали и пост
-        final String sql = "SELECT DISTINCT u1.nickname, u1.email, u1.about, u1.fullname " +
+//      выводит дважды пользователей которые и ветку создавали и пост(исправить)
+        final StringBuilder sql = new StringBuilder("" +
+                "SELECT DISTINCT u1.nickname, u1.email, u1.about, u1.fullname " +
                 "FROM FUser u1 JOIN Thread on(Thread.author = u1.nickname AND Thread.forum = ?) " +
                 "UNION ALL " +
                 "SELECT DISTINCT u2.nickname, u2.email, u2.about, u2.fullname " +
-                "FROM FUser u2 JOIN Post on(Post.author = u2.nickname AND Post.forum = ?) ";
+                "FROM FUser u2 JOIN Post on(Post.author = u2.nickname AND Post.forum = ?) ");
+        final List<Object> args = new ArrayList<>();
+        args.add(slug);
+        args.add(slug);
 
-        List<User> users = jdbcTemplate.query(sql, new Object[] { slug, slug }, new UserRowMapper());
+        if (since != null) {
+            sql.append(" where LOWER(nickname COLLATE \"ucs_basic\")");
+            if (desc == Boolean.TRUE) {
+                sql.append(" >");
+            } else {
+                sql.append(" <");
+            }
+
+            sql.append(" LOWER(? COLLATE \"ucs_basic\")");
+
+            args.add(since);
+        }
+        sql.append(" ORDER BY nickname"); //  ORDER BY LOWER(nickname COLLATE "ucs_basic") doesn't work!
+        if (desc == Boolean.TRUE) {
+            sql.append(" DESC");
+        }
+        if (limit != null) {
+            sql.append(" LIMIT ?");
+            args.add(limit.intValue());
+        }
+
+
+        List<User> users = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), new UserRowMapper());
 
         return new ResponseEntity(users, HttpStatus.OK);
     }

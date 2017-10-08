@@ -1,10 +1,15 @@
 package serverDb.forum;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import serverDb.thread.Thread;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.time.ZonedDateTime;
 
 
 @RestController
@@ -37,15 +42,23 @@ public class ForumController {
     }
 
     @GetMapping(path = "/{slug}/threads")
-    public ResponseEntity getThreads(@PathVariable("slug") String slug, @RequestParam("limit") String limit,
-                                     @RequestParam("since") String since, @RequestParam("desc") String desc) {
+    public ResponseEntity getThreads(@PathVariable("slug") String slug, @RequestParam(value = "limit", required = false) Integer limit,
+                                     @RequestParam(value = "since", required = false) String since,
+                                     @RequestParam(value = "desc", required = false) Boolean desc) throws ParseException {
+        if (desc == null) {
+            desc = Boolean.FALSE;
+        }
 
         return forumService.getThreads(slug, limit, since, desc);
     }
 
     @GetMapping(path = "/{slug}/users")
-    public ResponseEntity getUsers(@PathVariable("slug") String slug, @RequestParam("limit") String limit,
-                                   @RequestParam("since") String since, @RequestParam("desc") String desc) {
+    public ResponseEntity getUsers(@PathVariable("slug") String slug, @RequestParam(value = "limit", required = false) Integer limit,
+                                   @RequestParam(value = "since", required = false) String since,
+                                   @RequestParam(value = "desc", required = false) Boolean desc) {
+        if (desc == null) {
+            desc = Boolean.FALSE;
+        }
 
         return forumService.getUsers(slug, limit, since, desc);
     }
