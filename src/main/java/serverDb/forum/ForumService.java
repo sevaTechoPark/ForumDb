@@ -142,10 +142,10 @@ public class ForumService {
         if (since != null) {
             sql.append(" AND created");
             if (desc == Boolean.TRUE) {
-                sql.append(" >");
+                sql.append(" <");
 
             } else {
-                sql.append(" <");
+                sql.append(" >");
             }
             sql.append(" = '" + since + "' ");
         }
@@ -191,9 +191,9 @@ public class ForumService {
         if (since != null) {
             sql.append(" where LOWER(nickname COLLATE \"ucs_basic\")");
             if (desc == Boolean.TRUE) {
-                sql.append(" >");
-            } else {
                 sql.append(" <");
+            } else {
+                sql.append(" >");
             }
 
             sql.append(" LOWER(? COLLATE \"ucs_basic\")");

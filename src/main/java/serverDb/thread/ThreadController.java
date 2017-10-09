@@ -25,36 +25,76 @@ public class ThreadController {
     @PostMapping(path = "/{slug_or_id}/create")
     public ResponseEntity createPost(@PathVariable("slug_or_id") String slug_or_id, @RequestBody List<Post> posts) {
 
-       return threadService.createPosts(slug_or_id, posts);
+        int id = -1;
+        try {
+            id = Integer.parseInt(slug_or_id);
+        } catch (java.lang.NumberFormatException e ) {
+
+        }
+
+       return threadService.createPosts(slug_or_id, id, posts);
     }
 
 
     @PostMapping(path = "/{slug_or_id}/details")
     public ResponseEntity renameThread(@PathVariable("slug_or_id") String slug_or_id, @RequestBody Thread thread) {
 
-        return threadService.renameThread(slug_or_id, thread);
+        int id = -1;
+        try {
+            id = Integer.parseInt(slug_or_id);
+        } catch (java.lang.NumberFormatException e ) {
+
+        }
+
+        return threadService.renameThread(slug_or_id, id, thread);
     }
 
 
     @PostMapping(path = "/{slug_or_id}/vote")
     public ResponseEntity voteThread(@PathVariable("slug_or_id") String slug_or_id, @RequestBody Vote vote) {
 
-        return threadService.voteThread(slug_or_id, vote);
+        int id = -1;
+        try {
+            id = Integer.parseInt(slug_or_id);
+        } catch (java.lang.NumberFormatException e ) {
+
+        }
+
+        return threadService.voteThread(slug_or_id, id, vote);
     }
 
 
     @GetMapping(path = "/{slug_or_id}/details")
     public ResponseEntity getThread(@PathVariable("slug_or_id") String slug_or_id) {
 
-        return threadService.getThread(slug_or_id);
+        int id = -1;
+        try {
+            id = Integer.parseInt(slug_or_id);
+        } catch (java.lang.NumberFormatException e ) {
+
+        }
+
+        return threadService.getThread(slug_or_id, id);
     }
 
     @GetMapping(path = "/{slug_or_id}/posts")
-    public ResponseEntity getPosts(@PathVariable("slug_or_id") String slug_or_id, @RequestParam("limit") String limit,
-                                     @RequestParam("since") String since,  @RequestParam("sort") String sort,
-                                     @RequestParam("desc") String desc) {
+    public ResponseEntity getPosts(@PathVariable("slug_or_id") String slug_or_id,@RequestParam(value = "limit", required = false) Integer limit,
+                                   @RequestParam(value = "since", required = false) Integer since,
+                                   @RequestParam(value = "sort", required = false) String sort,
+                                   @RequestParam(value = "desc", required = false) Boolean desc) {
 
-        return threadService.getPosts(slug_or_id, limit, since, sort, desc);
+        int id = -1;
+        try {
+            id = Integer.parseInt(slug_or_id);
+        } catch (java.lang.NumberFormatException e ) {
+
+        }
+
+        if (desc == null) {
+            desc = Boolean.FALSE;
+        }
+
+        return threadService.getPosts(slug_or_id, id, limit, since, sort, desc);
     }
 
 

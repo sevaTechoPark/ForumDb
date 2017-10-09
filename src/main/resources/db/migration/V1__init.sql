@@ -19,6 +19,7 @@ CREATE TABLE Thread(
   slug citext PRIMARY KEY,
   forum citext references Forum(slug),
   author citext references FUser(nickname),
+  id SERIAL4,
   created timestamptz(6) DEFAULT now() NOT NULL,
   message citext NOT NULL,
   title citext NOT NULL,

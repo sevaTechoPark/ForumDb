@@ -11,6 +11,7 @@ public class ThreadRowMapper implements RowMapper {
         Thread thread = new Thread();
 
         thread.setVotes(rs.getInt("votes"));
+        thread.setId(rs.getInt("id"));
         thread.setCreated(rs.getString("created"));
         thread.setMessage(rs.getString("message"));
         thread.setForum(rs.getString("forum"));

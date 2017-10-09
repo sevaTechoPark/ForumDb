@@ -22,6 +22,7 @@ import java.sql.Timestamp;
 
 import java.time.ZonedDateTime;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -31,24 +32,25 @@ public class ThreadService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-
-    public ResponseEntity createPosts(String slug_or_id, List<Post> posts) {
+    public ResponseEntity createPosts(String slug, int id, List<Post> posts) {
 
         boolean flag;
-        String forum_slug;
+        String forumSlug;
+        String threadSlug;
 
         try {
 
-            final String sqlGetThread = "SELECT * from Thread WHERE slug = ?";
+            final String sqlGetThread = "SELECT * from Thread WHERE slug = ? OR id = ?";
             Thread thread = (Thread) jdbcTemplate.queryForObject(
-                    sqlGetThread, new Object[] { slug_or_id }, new ThreadRowMapper());
+                    sqlGetThread, new Object[] { slug, id }, new ThreadRowMapper());
 
-            forum_slug = thread.getForum();
+            threadSlug = thread.getSlug();
+            forumSlug = thread.getForum();
             flag = thread.getIsParent();
 
         } catch (EmptyResultDataAccessException e) {
 
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug_or_id),
+            return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -60,7 +62,7 @@ public class ThreadService {
                 if (listIter.next().getParent() == 0) {
                     flag = true;
                     final String sqlUpdateThread = "UPDATE Thread SET isParent = TRUE WHERE slug = ?";
-                    jdbcTemplate.update(sqlUpdateThread, new Object[] { slug_or_id });
+                    jdbcTemplate.update(sqlUpdateThread, new Object[] { threadSlug });
                     break;
                 }
             }
@@ -85,13 +87,13 @@ public class ThreadService {
                 ps.setString(1, post.getAuthor());
                 ps.setString(2, post.getMessage());
                 ps.setLong(3, post.getParent());
-                ps.setString(4, slug_or_id);
-                ps.setString(5, forum_slug);
+                ps.setString(4, threadSlug);
+                ps.setString(5, forumSlug);
                 ps.setTimestamp(6, created);
 
-                post.setForum(forum_slug);
+                post.setForum(forumSlug);
                 post.setCreated(created.toString());
-                post.setThread(slug_or_id);
+                post.setThread(threadSlug);
             }
 
             @Override
@@ -103,31 +105,41 @@ public class ThreadService {
         return new ResponseEntity(posts, HttpStatus.CREATED);
     }
 
-    public ResponseEntity renameThread(String slug_or_id, Thread thread) {
+    public ResponseEntity renameThread(String slug, int id, Thread thread) {
 
-        String sql = "UPDATE Thread SET message = ?, title = ? WHERE slug = ?";
+        String sql = "UPDATE Thread SET message = ?, title = ? WHERE slug = ? OR id = ?";
 
-        int rowsAffected = jdbcTemplate.update(sql, thread.getMessage(), thread.getTitle(), slug_or_id);
+        int rowsAffected = jdbcTemplate.update(sql, thread.getMessage(), thread.getTitle(), slug, id);
         if (rowsAffected == 0) {
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug_or_id), HttpStatus.NOT_FOUND);
+            return new ResponseEntity(Error.getJson("Can't find thread: " + slug), HttpStatus.NOT_FOUND);
         }
 
-        sql = "SELECT * from Thread WHERE slug = ?";
+        sql = "SELECT * from Thread WHERE slug = ? or id = ?";
 
         thread = (Thread) jdbcTemplate.queryForObject(
-                sql, new Object[] { slug_or_id }, new ThreadRowMapper());
+                sql, new Object[] { slug, id }, new ThreadRowMapper());
 
         return new ResponseEntity(thread, HttpStatus.OK);
 
     }
 
-    public ResponseEntity voteThread(String slug_or_id, Vote vote) {
+    public ResponseEntity voteThread(String slug, int id, Vote vote) {
 
-        final String sql = "UPDATE Thread SET votes = votes + ? WHERE slug = ?";
+        String threadSlug;
+        Thread thread;
 
-        int rowsAffected = jdbcTemplate.update(sql, 0, slug_or_id); // check exist threads
-        if (rowsAffected == 0) {
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug_or_id), HttpStatus.NOT_FOUND);
+        try {
+
+            final String sql = "SELECT * from Thread WHERE slug = ? OR id = ?";
+            thread = (Thread) jdbcTemplate.queryForObject(
+                    sql, new Object[] { slug, id }, new ThreadRowMapper());
+
+            threadSlug = thread.getSlug();
+
+        } catch (EmptyResultDataAccessException e) {
+
+            return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
+                    HttpStatus.NOT_FOUND);
         }
 
         int voiceForUpdate = vote.getVoice();
@@ -136,17 +148,17 @@ public class ThreadService {
 
             final String sqlFindVote = "SELECT voice from Vote WHERE nickname = ? AND thread = ?";
             final int voice = (int) jdbcTemplate.queryForObject(
-                    sqlFindVote, new Object[]{vote.getNickname(), slug_or_id}, Integer.class);
+                    sqlFindVote, new Object[]{vote.getNickname(), threadSlug}, Integer.class);
 
             if (vote.getVoice() == voice) { // his voice doesn't change
-                return new ResponseEntity(vote, HttpStatus.OK);
+                return new ResponseEntity(thread, HttpStatus.OK);
 
             } else {    // voice changed.
 
                 final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE nickname = ? AND thread = ?";
-                jdbcTemplate.update(sqlUpdateVote, vote.getVoice(), vote.getNickname(), slug_or_id);
+                jdbcTemplate.update(sqlUpdateVote, vote.getVoice(), vote.getNickname(), threadSlug);
 
-                voiceForUpdate = voice * (-2);  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
+                voiceForUpdate = vote.getVoice() * 2;  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
 
             }
 
@@ -154,49 +166,82 @@ public class ThreadService {
 
             final String sqlInsertVote = "INSERT INTO Vote(nickname, voice, thread) VALUES(?,?,?)";
 
-            jdbcTemplate.update(sqlInsertVote, new Object[]{vote.getNickname(), vote.getVoice(), slug_or_id});
+            jdbcTemplate.update(sqlInsertVote, new Object[]{vote.getNickname(), vote.getVoice(), threadSlug});
         }
 
+        final String sql = "UPDATE Thread SET votes = votes + ? WHERE slug = ?";
 
-        jdbcTemplate.update(sql, voiceForUpdate, slug_or_id); // update threads
+        jdbcTemplate.update(sql, voiceForUpdate, threadSlug); // update threads
 
+        thread.setVotes(thread.getVotes() + voiceForUpdate);
 
-        return new ResponseEntity(vote, HttpStatus.OK);
+        return new ResponseEntity(thread, HttpStatus.OK);
     }
 
-    public ResponseEntity getThread(String slug_or_id) {
+    public ResponseEntity getThread(String slug, int id) {
 
         try {
 
-            final String sql = "SELECT * from Thread WHERE slug = ?";
+            final String sql = "SELECT * from Thread WHERE slug = ? OR id = ?";
             Thread thread = (Thread) jdbcTemplate.queryForObject(
-                    sql, new Object[] { slug_or_id }, new ThreadRowMapper());
+                    sql, new Object[] { slug, id }, new ThreadRowMapper());
 
             return new ResponseEntity(thread, HttpStatus.OK);
 
         } catch (EmptyResultDataAccessException e) {
 
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug_or_id),
+            return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
                     HttpStatus.NOT_FOUND);
         }
 
     }
 
-    public ResponseEntity getPosts(String slug_or_id, String limit, String since, String sort, String desc) {
+    public ResponseEntity getPosts(String slug, int id, Integer limit, Integer since, String sort, Boolean desc) {
 
+        String threadSlug;
         try {
 
-            final String sqlCheckForum = "SELECT slug from Thread WHERE slug = ?";
-            jdbcTemplate.queryForObject(sqlCheckForum, new Object[]{ slug_or_id }, String.class);
+            final String sqlCheckForum = "SELECT slug from Thread WHERE slug = ? OR id = ?";
+            threadSlug = (String) jdbcTemplate.queryForObject(sqlCheckForum, new Object[]{ slug, id }, String.class);
 
         } catch (EmptyResultDataAccessException e) {
 
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug_or_id),
+            return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
                     HttpStatus.NOT_FOUND);
         }
 
-        final String sql = "SELECT * from Post WHERE thread = ?";
-        List<Post> posts = jdbcTemplate.query(sql, new Object[] { slug_or_id }, new PostRowMapper());
+        final StringBuilder sql = new StringBuilder("SELECT * from Post WHERE thread = ?");
+        final List<Object> args = new ArrayList<>();
+        args.add(threadSlug);
+
+        if (since != null) {
+            sql.append(" AND id");
+            if (desc == Boolean.TRUE) {
+                sql.append(" <");
+            } else {
+                sql.append(" >");
+            }
+
+            sql.append(" ?");
+
+            args.add(since);
+        }
+        if (sort != null) {
+            if (sort.equals("flat")) {
+                sql.append(" ORDER BY created");
+            }
+
+            if (desc == Boolean.TRUE) {
+                sql.append(" DESC");
+            }
+        }
+
+        if (limit != null) {
+            sql.append(" LIMIT ?");
+            args.add(limit.intValue());
+        }
+
+        List<Post> posts = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), new PostRowMapper());
 
         return new ResponseEntity(posts, HttpStatus.OK);
     }

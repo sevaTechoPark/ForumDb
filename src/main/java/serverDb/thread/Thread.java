@@ -19,6 +19,7 @@ public class Thread {
     private String slug;
     private String title;
     private int votes;
+    private int id;
 
     private boolean isParent;
 
@@ -43,6 +44,10 @@ public class Thread {
 
     public Thread() {
 
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getAuthor() {
@@ -84,6 +89,10 @@ public class Thread {
 
     public String getTitle() {
         return title;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public int getVotes() {
