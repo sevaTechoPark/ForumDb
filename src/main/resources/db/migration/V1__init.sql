@@ -1,4 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS citext ;
+CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
 
 CREATE TABLE FUser(
   nickname citext NOT NULL PRIMARY KEY,
@@ -16,10 +16,10 @@ CREATE TABLE Forum(
 );
 
 CREATE TABLE Thread(
-  slug citext PRIMARY KEY,
+  id SERIAL4 PRIMARY KEY,
   forum citext references Forum(slug),
   author citext references FUser(nickname),
-  id SERIAL4,
+  slug citext UNIQUE,
   created timestamptz(6) DEFAULT now() NOT NULL,
   message citext NOT NULL,
   title citext NOT NULL,

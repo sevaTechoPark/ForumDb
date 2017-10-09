@@ -1,20 +1,26 @@
 package serverDb.thread;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
+import java.util.Date;
 
 public class Thread {
 
     private String author;
     private String forum;
-    private ZonedDateTime created;
-    private String createdFromDb;
+    private Timestamp created;
     private String message;
     private String slug;
     private String title;
@@ -26,21 +32,20 @@ public class Thread {
     @JsonCreator
     public Thread(@JsonProperty("slug") String slug, @JsonProperty("author") String author,
                   @JsonProperty("message") String message, @JsonProperty("title") String title,
-                  @JsonProperty("created") String created) {
+                  @JsonProperty("created") Timestamp created) {
 
         this.slug = slug;
         this.author = author;
         this.message = message;
         this.title = title;
-        if(created != null) {
-            this.created = ZonedDateTime.parse(created, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+        if (created == null) {
+            this.created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
         } else {
-            this.created = null;
+            this.created = created;
         }
 
-        this.createdFromDb = null;
     }
-
 
     public Thread() {
 
@@ -62,17 +67,8 @@ public class Thread {
         return isParent;
     }
 
-
-    @JsonIgnore
-    public ZonedDateTime getCreatedZonedDateTime() {
+    public Timestamp getCreated() {
         return created;
-    }
-
-    public String getCreated() {
-        if (createdFromDb != null) {
-            return createdFromDb;
-        }
-        return created.toString();
     }
 
     public String getMessage() {
@@ -83,8 +79,8 @@ public class Thread {
         return slug;
     }
 
-    public void setParent(boolean parent) {
-        isParent = parent;
+    public int getVotes() {
+        return votes;
     }
 
     public String getTitle() {
@@ -95,8 +91,8 @@ public class Thread {
         this.id = id;
     }
 
-    public int getVotes() {
-        return votes;
+    public void setParent(boolean parent) {
+        isParent = parent;
     }
 
     public void setAuthor(String author) {
@@ -107,10 +103,9 @@ public class Thread {
         this.forum = forum;
     }
 
-
 //for ThreadRowMapper.
-    public void setCreated(String created) {
-        this.createdFromDb = created;
+    public void setCreated(Timestamp created) {
+        this.created = created;
     }
 
     public void setMessage(String message) {
@@ -134,12 +129,13 @@ public class Thread {
         final ObjectMapper map = new ObjectMapper();
         final ObjectNode node = map.createObjectNode();
 
-        node.put("forum", this.forum);
         node.put("author", this.author);
-        node.put("slug", this.slug);
-        node.put("created", this.getCreated());
-        node.put("title", this.title);
+        node.put("created", this.created.toInstant().toString());
+        node.put("forum", this.forum);
+        node.put("id", this.id);
         node.put("message", this.message);
+        node.put("title", this.title);
+        node.put("slug", this.slug);
         node.put("votes", this.votes);
 
         return node;

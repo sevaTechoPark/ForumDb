@@ -10,6 +10,9 @@ import serverDb.thread.ThreadRowMapper;
 import serverDb.user.User;
 import serverDb.user.UserRowMapper;
 
+import static serverDb.thread.ThreadService.findThread;
+import static serverDb.user.UserService.findUser;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,13 +25,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.sql.Timestamp;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoField;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+
+
 
 @Service
 public class ForumService {
@@ -40,6 +41,16 @@ public class ForumService {
 
         try {
 
+//          **************************************find user**************************************
+            ResponseEntity responseEntity = findUser(forum.getUser(), jdbcTemplate);
+            if (responseEntity.getStatusCode() != HttpStatus.OK) {
+                return responseEntity;
+            }
+            User user = (User) responseEntity.getBody();
+//          **************************************find user**************************************
+
+            forum.setUser(user.getNickname());
+
             final String sql = "INSERT INTO Forum(slug, title, \"user\") VALUES(?,?,?)";
             jdbcTemplate.update(sql, new Object[] { forum.getSlug(), forum.getTitle(), forum.getUser() });
 
@@ -47,9 +58,7 @@ public class ForumService {
 
         } catch (DuplicateKeyException e) {
 
-            final String sql = "SELECT * from Forum WHERE slug = ?";
-            Forum duplicateForum = (Forum) jdbcTemplate.queryForObject(
-                    sql, new Object[] { forum.getSlug() }, new ForumRowMapper());
+            Forum duplicateForum = (Forum) findForum(forum.getSlug(), jdbcTemplate).getBody();
 
             return new ResponseEntity(duplicateForum, HttpStatus.CONFLICT);
 
@@ -58,67 +67,62 @@ public class ForumService {
             return new ResponseEntity(Error.getJson("Can't find user with nickname: " + forum.getUser()),
                     HttpStatus.NOT_FOUND);
         }
-
     }
 
     public ResponseEntity createThread(String forum_slug, Thread thread) {
 
-        Timestamp created;
-        if (thread.getCreated() == null) {
-
-            created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
-
-        } else {
-
-            created = new Timestamp(thread.getCreatedZonedDateTime().getLong(ChronoField.INSTANT_SECONDS) * 1000
-                    + thread.getCreatedZonedDateTime().getLong(ChronoField.MILLI_OF_SECOND));;
-        }
-
         try {
+
+//          **************************************find user**************************************
+            ResponseEntity responseEntity = findUser(thread.getAuthor(), jdbcTemplate);
+            if (responseEntity.getStatusCode() != HttpStatus.OK) {
+                return responseEntity;
+            }
+            User user = (User) responseEntity.getBody();
+//          **************************************find user**************************************
+
+            thread.setAuthor(user.getNickname());
+
+//          **************************************find forum**************************************
+            responseEntity = findForum(forum_slug, jdbcTemplate);
+            if (responseEntity.getStatusCode() != HttpStatus.OK) {
+                return responseEntity;
+            }
+            Forum forum = (Forum) responseEntity.getBody();
+//          **************************************find forum**************************************
+
+            forum_slug = forum.getSlug();
+
+            Timestamp created = thread.getCreated();
 
             final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum) VALUES(?,?,?,?,?,?)";
             jdbcTemplate.update(sql, thread.getSlug(), thread.getTitle(), thread.getAuthor(),
                     thread.getMessage(), created, forum_slug);
 
             thread.setForum(forum_slug);
-            thread.setCreated(created.toString());
+            thread.setCreated(created);
+            thread.setId(42);
 
-            return new ResponseEntity(thread, HttpStatus.CREATED);
+            return new ResponseEntity(thread.getJson(), HttpStatus.CREATED);
 
         } catch (DuplicateKeyException e) {
 
-            final String sql = "SELECT * from Thread WHERE slug = ?";
-            Thread duplicateThread = (Thread) jdbcTemplate.queryForObject(
-                    sql, new Object[] { thread.getSlug() }, new ThreadRowMapper());
+            Thread duplicateThread = (Thread) findThread(thread.getSlug(), -1, jdbcTemplate).getBody();
 
             return new ResponseEntity(duplicateThread, HttpStatus.CONFLICT);
 
-        } catch (DataIntegrityViolationException e) {
-
-            return new ResponseEntity(Error.getJson("Can't find author with nickname: " + thread.getAuthor()
-            + " or forum: " + thread.getForum()), HttpStatus.NOT_FOUND);
         }
-
-
 
     }
 
     public ResponseEntity getForum(String slug) {
 
-        try {
-
-            final String sql = "SELECT * from Forum WHERE slug = ?";
-            Forum forum = (Forum) jdbcTemplate.queryForObject(
-                    sql, new Object[] { slug }, new ForumRowMapper());
-
-            return new ResponseEntity(forum, HttpStatus.OK);
-
-        } catch (EmptyResultDataAccessException e) {
-
-            return new ResponseEntity(Error.getJson("Can't find forum: " + slug),
-                    HttpStatus.NOT_FOUND);
-
+        ResponseEntity responseEntity = findForum(slug, jdbcTemplate);
+        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+            return responseEntity;
         }
+
+        return  responseEntity;
 
     }
 
@@ -215,5 +219,23 @@ public class ForumService {
         return new ResponseEntity(users, HttpStatus.OK);
     }
 
+    public static ResponseEntity findForum(String slug, JdbcTemplate jdbcTemplate) {
+
+        try {
+
+            final String sql = "SELECT * from Forum WHERE LOWER(slug COLLATE \"ucs_basic\") = LOWER(? COLLATE \"ucs_basic\")";
+            Forum forum = (Forum) jdbcTemplate.queryForObject(
+                    sql, new Object[] { slug }, new ForumRowMapper());
+
+            return new ResponseEntity(forum, HttpStatus.OK);
+
+        } catch (EmptyResultDataAccessException e) {
+
+            return new ResponseEntity(Error.getJson("Can't find forum: " + slug),
+                    HttpStatus.NOT_FOUND);
+
+        }
+
+    }
 }
 

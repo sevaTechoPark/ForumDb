@@ -180,19 +180,12 @@ public class ThreadService {
 
     public ResponseEntity getThread(String slug, int id) {
 
-        try {
-
-            final String sql = "SELECT * from Thread WHERE slug = ? OR id = ?";
-            Thread thread = (Thread) jdbcTemplate.queryForObject(
-                    sql, new Object[] { slug, id }, new ThreadRowMapper());
-
-            return new ResponseEntity(thread, HttpStatus.OK);
-
-        } catch (EmptyResultDataAccessException e) {
-
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
-                    HttpStatus.NOT_FOUND);
+        ResponseEntity responseEntity = findThread(slug, id, jdbcTemplate);
+        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+            return responseEntity;
         }
+
+        return  responseEntity;
 
     }
 
@@ -246,5 +239,23 @@ public class ThreadService {
         return new ResponseEntity(posts, HttpStatus.OK);
     }
 
+    public static ResponseEntity findThread(String slug, int id, JdbcTemplate jdbcTemplate) {
+
+        try {
+
+            final String sql = "SELECT * from Thread WHERE LOWER(slug COLLATE \"ucs_basic\") = LOWER(? COLLATE \"ucs_basic\") " +
+                    "OR LOWER(id COLLATE \"ucs_basic\") = LOWER(? COLLATE \"ucs_basic\")";
+            Thread thread = (Thread) jdbcTemplate.queryForObject(
+                    sql, new Object[] { slug, id }, new ThreadRowMapper());
+
+            return new ResponseEntity(thread, HttpStatus.OK);
+
+        } catch (EmptyResultDataAccessException e) {
+
+            return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
+                    HttpStatus.NOT_FOUND);
+        }
+
+    }
 }
 

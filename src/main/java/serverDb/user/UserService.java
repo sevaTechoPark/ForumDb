@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.List;
+
 @Service
 public class UserService{
 
@@ -24,17 +26,18 @@ public class UserService{
         try {
 
             final String sql = "INSERT INTO FUser(nickname, email, fullname, about) VALUES(?,?,?,?)";
-            jdbcTemplate.update(sql, new Object[]{user.getNickname(), user.getEmail(), user.getFullname(), user.getAbout()});
+            jdbcTemplate.update(sql, new Object[]{ user.getNickname(), user.getEmail(), user.getFullname(), user.getAbout()});
 
             return new ResponseEntity(user, HttpStatus.CREATED); // 201
 
         } catch (DuplicateKeyException e) {
 
-            final String sql = "SELECT * from FUser WHERE nickname = ? OR email = ?";
-            User duplicateUser = (User) jdbcTemplate.queryForObject(
-                    sql, new Object[] { user.getNickname(), user.getEmail() }, new UserRowMapper());
+            final String sql = "SELECT * FROM FUser WHERE LOWER(nickname COLLATE \"ucs_basic\") =  LOWER(? COLLATE \"ucs_basic\") " +
+                    "OR LOWER(email COLLATE \"ucs_basic\") =  LOWER(? COLLATE \"ucs_basic\")";
 
-            return new ResponseEntity(duplicateUser, HttpStatus.CONFLICT); // 409
+            List<User> users = jdbcTemplate.query(sql, new Object[] { user.getNickname(), user.getEmail() }, new UserRowMapper());
+
+            return new ResponseEntity(users, HttpStatus.CONFLICT); // 409
         }
     }
 
@@ -42,38 +45,61 @@ public class UserService{
 
         try {
 
-            final String sql = "UPDATE FUser SET email = ?, fullname = ?, about = ? WHERE nickname = ?";
-            int rowsAffected = jdbcTemplate.update(sql, user.getEmail(), user.getFullname(), user.getAbout(), user.getNickname());
-            if (rowsAffected == 0) {
-                return new ResponseEntity(Error.getJson("Can't find user with nickname: " + user.getNickname()),
-                        HttpStatus.NOT_FOUND);
+//          **************************************find user**************************************
+            ResponseEntity responseEntity = findUser(user.getNickname(), jdbcTemplate);
+            if (responseEntity.getStatusCode() != HttpStatus.OK) {
+                return responseEntity;
             }
+            User oldUser = (User) responseEntity.getBody();
+//          **************************************find user**************************************
+
+            if (user.getEmail() == null) {
+                user.setEmail(oldUser.getEmail());
+            }
+            if (user.getAbout() == null) {
+                user.setAbout(oldUser.getAbout());
+            }
+            if (user.getFullname() == null) {
+                user.setFullname(oldUser.getFullname());
+            }
+
+            final String sql = "UPDATE FUser SET email = ?, fullname = ?, about = ? WHERE  LOWER(nickname COLLATE \"ucs_basic\") =  LOWER(? COLLATE \"ucs_basic\")";
+            jdbcTemplate.update(sql, user.getEmail(), user.getFullname(), user.getAbout(), user.getNickname());
 
             return new ResponseEntity(user, HttpStatus.OK);
 
         } catch (DuplicateKeyException e) {
 
             return new ResponseEntity(Error.getJson("this email has already existed"), HttpStatus.CONFLICT); // 409
+
         }
     }
 
     public ResponseEntity getUser(String nickname) {
 
+        ResponseEntity responseEntity = findUser(nickname, jdbcTemplate);
+        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+            return responseEntity;
+        }
+
+        return  responseEntity;
+    }
+
+    public static ResponseEntity findUser(String nickname, JdbcTemplate jdbcTemplate) {
+
         try {
 
-            final String sql = "SELECT * from FUser WHERE nickname = ?";
+            final String sql = "SELECT * from FUser WHERE  LOWER(nickname COLLATE \"ucs_basic\") =  LOWER(? COLLATE \"ucs_basic\")";
             User user = (User) jdbcTemplate.queryForObject(
-                    sql, new Object[]{nickname}, new UserRowMapper());
+                    sql, new Object[]{ nickname }, new UserRowMapper());
 
             return new ResponseEntity(user, HttpStatus.OK);
 
-        } catch (EmptyResultDataAccessException emptyResultDataAccessException) {
+        } catch (EmptyResultDataAccessException e) {
 
             return new ResponseEntity(Error.getJson("Can't find user with nickname: " + nickname),
                     HttpStatus.NOT_FOUND);
-
         }
     }
-
 }
 
