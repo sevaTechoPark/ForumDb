@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 
 
@@ -16,8 +17,7 @@ public class Post {
     private String forum;
     private String author;
     private String thread;
-    private ZonedDateTime created;
-    private String createdFromDb;
+    private Timestamp created;
     private boolean isEdited;
     private String message;
     private long parent;
@@ -29,8 +29,6 @@ public class Post {
         this.author = author;
         this.message = message;
         this.parent = parent;
-
-        this.createdFromDb = null;
 
     }
 
@@ -51,10 +49,7 @@ public class Post {
     }
 
     public String getCreated() {
-        if (createdFromDb != null) {
-            return createdFromDb;
-        }
-        return created.toString();
+        return created.toInstant().toString();
     }
 
     public boolean isEdited() {
@@ -85,8 +80,8 @@ public class Post {
         this.author = author;
     }
 
-    public void setCreated(String created) {
-        this.createdFromDb = created;
+    public void setCreated(Timestamp created) {
+        this.created = created;
     }
 
     public void setEdited(boolean edited) {
@@ -114,7 +109,7 @@ public class Post {
         node.put("forum", this.forum);
         node.put("author", this.author);
         node.put("thread", this.thread);
-        node.put("created", this.getCreated());
+        node.put("created", this.created.toInstant().toString());
         node.put("isEdited", this.isEdited);
         node.put("message", this.message);
         node.put("parent", this.parent);

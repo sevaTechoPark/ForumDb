@@ -34,25 +34,17 @@ public class ThreadService {
 
     public ResponseEntity createPosts(String slug, int id, List<Post> posts) {
 
-        boolean flag;
-        String forumSlug;
-        String threadSlug;
-
-        try {
-
-            final String sqlGetThread = "SELECT * from Thread WHERE slug = ? OR id = ?";
-            Thread thread = (Thread) jdbcTemplate.queryForObject(
-                    sqlGetThread, new Object[] { slug, id }, new ThreadRowMapper());
-
-            threadSlug = thread.getSlug();
-            forumSlug = thread.getForum();
-            flag = thread.getIsParent();
-
-        } catch (EmptyResultDataAccessException e) {
-
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
-                    HttpStatus.NOT_FOUND);
+//      **************************************find user**************************************
+        ResponseEntity responseEntity = findThread(slug, id, jdbcTemplate);
+        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+            return responseEntity;
         }
+        Thread thread = (Thread) responseEntity.getBody();
+//      **************************************find user**************************************
+
+        String threadSlug = thread.getSlug();
+        String forumSlug = thread.getForum();
+        boolean flag = thread.getIsParent();
 
         if(flag == false) { // may be in current posts will be parent post
             ListIterator<Post> listIter = posts.listIterator();
@@ -92,7 +84,7 @@ public class ThreadService {
                 ps.setTimestamp(6, created);
 
                 post.setForum(forumSlug);
-                post.setCreated(created.toString());
+                post.setCreated(created);
                 post.setThread(threadSlug);
             }
 
@@ -243,8 +235,7 @@ public class ThreadService {
 
         try {
 
-            final String sql = "SELECT * from Thread WHERE LOWER(slug COLLATE \"ucs_basic\") = LOWER(? COLLATE \"ucs_basic\") " +
-                    "OR LOWER(id COLLATE \"ucs_basic\") = LOWER(? COLLATE \"ucs_basic\")";
+            final String sql = "SELECT * from Thread WHERE LOWER(slug COLLATE \"ucs_basic\") = LOWER(? COLLATE \"ucs_basic\") OR id = ?";
             Thread thread = (Thread) jdbcTemplate.queryForObject(
                     sql, new Object[] { slug, id }, new ThreadRowMapper());
 

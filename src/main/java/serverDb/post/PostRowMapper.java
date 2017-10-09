@@ -13,7 +13,7 @@ public class PostRowMapper implements RowMapper {
         post.setForum(rs.getString("forum"));
         post.setAuthor(rs.getString("author"));
         post.setThread(rs.getString("thread"));
-        post.setCreated(rs.getString("created"));
+        post.setCreated(rs.getTimestamp("created"));
         post.setEdited(rs.getBoolean("isEdited"));
         post.setMessage(rs.getString("message"));
         post.setParent(rs.getLong("parent"));

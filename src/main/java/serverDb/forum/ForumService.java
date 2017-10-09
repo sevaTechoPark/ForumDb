@@ -93,15 +93,13 @@ public class ForumService {
 
             forum_slug = forum.getSlug();
 
-            Timestamp created = thread.getCreated();
+            Timestamp created = thread.getCreatedTimestamp();
 
             final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum) VALUES(?,?,?,?,?,?)";
             jdbcTemplate.update(sql, thread.getSlug(), thread.getTitle(), thread.getAuthor(),
                     thread.getMessage(), created, forum_slug);
 
             thread.setForum(forum_slug);
-            thread.setCreated(created);
-            thread.setId(42);
 
             return new ResponseEntity(thread.getJson(), HttpStatus.CREATED);
 
@@ -128,18 +126,14 @@ public class ForumService {
 
     public ResponseEntity getThreads(String slug, Integer limit, String since, Boolean desc) throws ParseException {
 
-        try {
-
-            final String sqlCheckForum = "SELECT slug from Forum WHERE slug = ?";
-            jdbcTemplate.queryForObject(sqlCheckForum, new Object[]{ slug }, String.class);
-
-        } catch (EmptyResultDataAccessException e) {
-
-            return new ResponseEntity(Error.getJson("Can't find forum: " + slug),
-                    HttpStatus.NOT_FOUND);
+//          **************************************find forum**************************************
+        ResponseEntity responseEntity = findForum(slug, jdbcTemplate);
+        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+            return responseEntity;
         }
+//          **************************************find forum**************************************
 
-        final StringBuilder sql = new StringBuilder("SELECT * from Thread WHERE forum = ?");
+        final StringBuilder sql = new StringBuilder("SELECT * from Thread WHERE LOWER(forum COLLATE \"ucs_basic\") = LOWER(? COLLATE \"ucs_basic\")");
         final List<Object> args = new ArrayList<>();
         args.add(slug);
 
@@ -147,11 +141,10 @@ public class ForumService {
             sql.append(" AND created");
             if (desc == Boolean.TRUE) {
                 sql.append(" <");
-
             } else {
                 sql.append(" >");
             }
-            sql.append(" = '" + since + "' ");
+            sql.append("= '" + since + "' ");
         }
         sql.append(" ORDER BY created");
         if (desc == Boolean.TRUE) {

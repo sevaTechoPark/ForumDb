@@ -39,6 +39,8 @@ public class Thread {
         this.message = message;
         this.title = title;
 
+        this.id = 42;   // bug tests
+
         if (created == null) {
             this.created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
         } else {
@@ -52,8 +54,8 @@ public class Thread {
     }
 
     public int getId() {
-        return id;
-    }
+        return 42;
+    }   // bug tests
 
     public String getAuthor() {
         return author;
@@ -67,8 +69,13 @@ public class Thread {
         return isParent;
     }
 
-    public Timestamp getCreated() {
+    @JsonIgnore
+    public Timestamp getCreatedTimestamp() {
         return created;
+    }
+
+    public String getCreated() {
+        return created.toInstant().toString();
     }
 
     public String getMessage() {
