@@ -4,6 +4,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import serverDb.error.Error;
 import serverDb.thread.Thread;
 import serverDb.thread.ThreadRowMapper;
@@ -22,13 +27,13 @@ import org.springframework.http.ResponseEntity;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.sql.Timestamp;
+import javax.validation.constraints.Null;
+import java.sql.*;
 
 import java.text.ParseException;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 
 @Service
@@ -91,17 +96,29 @@ public class ForumService {
             Forum forum = (Forum) responseEntity.getBody();
 //          **************************************find forum**************************************
 
-            forum_slug = forum.getSlug();
-
-            Timestamp created = thread.getCreatedTimestamp();
-
             final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum) VALUES(?,?,?,?,?,?)";
-            jdbcTemplate.update(sql, thread.getSlug(), thread.getTitle(), thread.getAuthor(),
-                    thread.getMessage(), created, forum_slug);
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+            //jdbcTemplate.update(sql, new Object[] { thread.getSlug(), thread.getTitle(), thread.getAuthor(),
+            //        thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug()}, keyHolder, new String[]{"id"});
+            jdbcTemplate.update((Connection connection) -> {
 
-            thread.setForum(forum_slug);
+                PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
 
-            return new ResponseEntity(thread.getJson(), HttpStatus.CREATED);
+                ps.setString(1, thread.getSlug());
+                ps.setString(2, thread.getTitle());
+                ps.setString(3, thread.getAuthor());
+                ps.setString(4, thread.getMessage());
+                ps.setTimestamp(5, thread.getCreatedTimestamp());
+                ps.setString(6, forum.getSlug());
+
+                return ps;
+
+            }, keyHolder);
+
+            thread.setId(keyHolder.getKey().intValue());
+            thread.setForum(forum.getSlug());
+
+            return new ResponseEntity(thread, HttpStatus.CREATED);
 
         } catch (DuplicateKeyException e) {
 
@@ -231,4 +248,7 @@ public class ForumService {
 
     }
 }
+
+
+
 

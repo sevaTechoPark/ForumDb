@@ -27,7 +27,6 @@ public class Thread {
     private int votes;
     private int id;
 
-    private boolean isParent;
 
     @JsonCreator
     public Thread(@JsonProperty("slug") String slug, @JsonProperty("author") String author,
@@ -38,8 +37,6 @@ public class Thread {
         this.author = author;
         this.message = message;
         this.title = title;
-
-        this.id = 42;   // bug tests
 
         if (created == null) {
             this.created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
@@ -54,7 +51,7 @@ public class Thread {
     }
 
     public int getId() {
-        return 42;
+        return id;
     }   // bug tests
 
     public String getAuthor() {
@@ -65,9 +62,6 @@ public class Thread {
         return forum;
     }
 
-    public boolean getIsParent() {
-        return isParent;
-    }
 
     @JsonIgnore
     public Timestamp getCreatedTimestamp() {
@@ -98,9 +92,6 @@ public class Thread {
         this.id = id;
     }
 
-    public void setParent(boolean parent) {
-        isParent = parent;
-    }
 
     public void setAuthor(String author) {
         this.author = author;

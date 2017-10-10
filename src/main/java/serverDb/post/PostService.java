@@ -30,7 +30,7 @@ public class PostService {
     private JdbcTemplate jdbcTemplate;
 
 
-    public ResponseEntity editMessage(int id, Post post) {
+    public ResponseEntity editMessage(long id, Post post) {
 
         final String sql = "UPDATE Post SET message = ?, isEdited = TRUE WHERE id = ?";
 
@@ -42,7 +42,7 @@ public class PostService {
         return new ResponseEntity("{}", HttpStatus.OK);
     }
 
-    public ResponseEntity getPost(int id, String[] related) {
+    public ResponseEntity getPost(long id, String[] related) {
 
         try {
 
@@ -56,7 +56,7 @@ public class PostService {
 
             if (Arrays.asList(related).contains("thread")) {
 
-                sql = "SELECT * from Thread WHERE slug = ?";
+                sql = "SELECT * from Thread WHERE id = ?";
                 Thread thread = (Thread) jdbcTemplate.queryForObject(sql, new Object[] { post.getThread() },
                         new ThreadRowMapper());
 

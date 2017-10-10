@@ -13,10 +13,10 @@ import java.time.ZonedDateTime;
 
 public class Post {
 
-    private int id;
+    private long id;
     private String forum;
     private String author;
-    private String thread;
+    private int thread;
     private Timestamp created;
     private boolean isEdited;
     private String message;
@@ -36,7 +36,7 @@ public class Post {
 
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
@@ -64,11 +64,11 @@ public class Post {
         return parent;
     }
 
-    public String getThread() {
+    public int getThread() {
         return thread;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -96,7 +96,7 @@ public class Post {
         this.parent = parent;
     }
 
-    public void setThread(String thread) {
+    public void setThread(int thread) {
         this.thread = thread;
     }
 

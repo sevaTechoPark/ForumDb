@@ -23,15 +23,14 @@ CREATE TABLE Thread(
   created timestamptz(6) DEFAULT now() NOT NULL,
   message citext NOT NULL,
   title citext NOT NULL,
-  votes INT4 DEFAULT 0,
-  isParent bool DEFAULT false NOT NULL
+  votes INT4 DEFAULT 0
 );
 
 CREATE TABLE Post(
-  id SERIAL PRIMARY KEY,
+  id SERIAL8 PRIMARY KEY,
   forum citext references Forum(slug),
   author citext references FUser(nickname),
-  thread citext references Thread(slug),
+  thread int4 references Thread(id),
   created timestamptz(6) DEFAULT now() NOT NULL,
   isEdited bool DEFAULT false NOT NULL,
   message citext NOT NULL,
@@ -39,7 +38,7 @@ CREATE TABLE Post(
 );
 
 CREATE TABLE Vote(
-  id SERIAL PRIMARY KEY,
+  id SERIAL4 PRIMARY KEY,
   nickname citext references FUser(nickname),
   thread citext references Thread(slug),
   voice INT2 NOT NULL

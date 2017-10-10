@@ -1,7 +1,6 @@
 package serverDb.thread;
 
 import org.springframework.jdbc.core.RowMapper;
-import serverDb.forum.Forum;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,7 +17,6 @@ public class ThreadRowMapper implements RowMapper {
         thread.setTitle(rs.getString("title"));
         thread.setAuthor(rs.getString("author"));
         thread.setSlug(rs.getString("slug"));
-        thread.setParent(rs.getBoolean("isParent"));
 
         return thread;
     }

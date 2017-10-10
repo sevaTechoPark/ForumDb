@@ -1,5 +1,7 @@
 package serverDb.thread;
 
+import com.mchange.v2.c3p0.impl.NewProxyConnection;
+import org.springframework.dao.DataAccessException;
 import serverDb.error.Error;
 import serverDb.post.Post;
 import serverDb.post.PostRowMapper;
@@ -16,9 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import javax.sql.DataSource;
+import java.sql.*;
 
 import java.time.ZonedDateTime;
 
@@ -34,40 +35,43 @@ public class ThreadService {
 
     public ResponseEntity createPosts(String slug, int id, List<Post> posts) {
 
-//      **************************************find user**************************************
+//      **************************************find thread**************************************
         ResponseEntity responseEntity = findThread(slug, id, jdbcTemplate);
         if (responseEntity.getStatusCode() != HttpStatus.OK) {
             return responseEntity;
         }
         Thread thread = (Thread) responseEntity.getBody();
-//      **************************************find user**************************************
+//      **************************************find thread**************************************
 
-        String threadSlug = thread.getSlug();
+        int threadId = thread.getId();
         String forumSlug = thread.getForum();
-        boolean flag = thread.getIsParent();
 
-        if(flag == false) { // may be in current posts will be parent post
+        String sql;
+        sql = "SELECT count(id) from Post WHERE thread = ? AND parent = 0";
+
+        boolean flag = (0 == (int) jdbcTemplate.queryForObject(sql,new Object[] { threadId }, Integer.class))
+                ? Boolean.FALSE : Boolean.TRUE;
+
+        if(flag == Boolean.FALSE) { // may be in current posts will be parent post
             ListIterator<Post> listIter = posts.listIterator();
 
             while(listIter.hasNext()){
 
                 if (listIter.next().getParent() == 0) {
                     flag = true;
-                    final String sqlUpdateThread = "UPDATE Thread SET isParent = TRUE WHERE slug = ?";
-                    jdbcTemplate.update(sqlUpdateThread, new Object[] { threadSlug });
                     break;
                 }
             }
         }
 
-        if (flag == false) {    // no parent message
+        if (flag == Boolean.FALSE) {    // no parent message
             return new ResponseEntity(Error.getJson("Missed parent post!"),
                     HttpStatus.CONFLICT);
         }
 
         Timestamp created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
 
-        final String sql = "INSERT INTO Post(author, message, parent, thread, forum, created) VALUES(?,?,?,?,?,?)";
+        sql = "INSERT INTO Post(author, message, parent, thread, forum, created) VALUES(?,?,?,?,?,?)";
 
         jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
 
@@ -79,13 +83,14 @@ public class ThreadService {
                 ps.setString(1, post.getAuthor());
                 ps.setString(2, post.getMessage());
                 ps.setLong(3, post.getParent());
-                ps.setString(4, threadSlug);
+                ps.setInt(4, threadId);
                 ps.setString(5, forumSlug);
                 ps.setTimestamp(6, created);
 
                 post.setForum(forumSlug);
                 post.setCreated(created);
-                post.setThread(threadSlug);
+                post.setThread(threadId);
+
             }
 
             @Override
@@ -93,6 +98,9 @@ public class ThreadService {
                 return posts.size();
             }
         });
+
+
+
 
         return new ResponseEntity(posts, HttpStatus.CREATED);
     }
@@ -249,4 +257,5 @@ public class ThreadService {
 
     }
 }
+
 
