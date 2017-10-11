@@ -27,9 +27,6 @@ import org.springframework.http.ResponseEntity;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import javax.validation.constraints.Null;
-import java.sql.*;
-
 import java.text.ParseException;
 
 import java.util.ArrayList;
@@ -95,28 +92,17 @@ public class ForumService {
             }
             Forum forum = (Forum) responseEntity.getBody();
 //          **************************************find forum**************************************
+            int id = (int) jdbcTemplate.queryForObject("SELECT nextval('thread_id_seq')", Integer.class);
 
-            final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum) VALUES(?,?,?,?,?,?)";
-            KeyHolder keyHolder = new GeneratedKeyHolder();
-            //jdbcTemplate.update(sql, new Object[] { thread.getSlug(), thread.getTitle(), thread.getAuthor(),
-            //        thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug()}, keyHolder, new String[]{"id"});
-            jdbcTemplate.update((Connection connection) -> {
+            final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum, id) VALUES(?,?,?,?,?,?,?)";
+            jdbcTemplate.update(sql, new Object[] { thread.getSlug(), thread.getTitle(), thread.getAuthor(),
+                    thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug(), id});
 
-                PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
-
-                ps.setString(1, thread.getSlug());
-                ps.setString(2, thread.getTitle());
-                ps.setString(3, thread.getAuthor());
-                ps.setString(4, thread.getMessage());
-                ps.setTimestamp(5, thread.getCreatedTimestamp());
-                ps.setString(6, forum.getSlug());
-
-                return ps;
-
-            }, keyHolder);
-
-            thread.setId(keyHolder.getKey().intValue());
+            thread.setId(id);
             thread.setForum(forum.getSlug());
+//          UPDATE COUNT OF THREADS
+            String sqlUpdate = "UPDATE Forum SET threads = threads + 1 WHERE slug = ?";
+            jdbcTemplate.update(sqlUpdate, forum.getSlug());
 
             return new ResponseEntity(thread, HttpStatus.CREATED);
 

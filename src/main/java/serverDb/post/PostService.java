@@ -39,7 +39,9 @@ public class PostService {
             return new ResponseEntity(Error.getJson("Can't find post: " + id), HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity("{}", HttpStatus.OK);
+        post = (Post) getPost(id, new String[]{"only post"}).getBody();
+
+        return new ResponseEntity(post.getJson(), HttpStatus.OK);
     }
 
     public ResponseEntity getPost(long id, String[] related) {
@@ -52,6 +54,11 @@ public class PostService {
             String sql;
             sql = "SELECT * from Post WHERE id = ?";
             Post post = (Post) jdbcTemplate.queryForObject(sql, new Object[] { id }, new PostRowMapper());
+
+            if (Arrays.asList(related).contains("only post")) {
+                return new ResponseEntity(post, HttpStatus.OK);
+            }
+
             responseBody.set("post", post.getJson());
 
             if (Arrays.asList(related).contains("thread")) {
@@ -64,7 +71,7 @@ public class PostService {
 
             }
 
-            if (Arrays.asList(related).contains("author")) {
+            if (Arrays.asList(related).contains("user")) {
 
                 sql = "SELECT * from FUser WHERE nickname = ?";
                 User user = (User) jdbcTemplate.queryForObject(sql, new Object[] { post.getAuthor() },

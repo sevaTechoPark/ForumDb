@@ -1,11 +1,16 @@
 package serverDb.thread;
 
-import com.mchange.v2.c3p0.impl.NewProxyConnection;
-import org.springframework.dao.DataAccessException;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import serverDb.error.Error;
+import serverDb.forum.Forum;
 import serverDb.post.Post;
 import serverDb.post.PostRowMapper;
+import serverDb.user.User;
 import serverDb.vote.Vote;
+
+import static serverDb.forum.ForumService.findForum;
+import static serverDb.user.UserService.findUser;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,7 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import javax.sql.DataSource;
 import java.sql.*;
 
 import java.time.ZonedDateTime;
@@ -26,6 +30,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+
 
 @Service
 public class ThreadService {
@@ -70,36 +75,43 @@ public class ThreadService {
         }
 
         Timestamp created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
-
-        sql = "INSERT INTO Post(author, message, parent, thread, forum, created) VALUES(?,?,?,?,?,?)";
-
+        try {
+        final List<Long> ids = jdbcTemplate.query("SELECT nextval('post_id_seq') FROM generate_series(1, ?)", new Object[]{posts.size()}, (rs, rowNum) -> rs.getLong(1));
+        sql = "INSERT INTO Post(author, message, parent, thread, forum, created, id) VALUES(?,?,?,?,?,?,?)";
         jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
 
-            @Override
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                @Override
+                public void setValues(PreparedStatement ps, int i) throws SQLException {
 
-                Post post = posts.get(i);
+                    Post post = posts.get(i);
 
-                ps.setString(1, post.getAuthor());
-                ps.setString(2, post.getMessage());
-                ps.setLong(3, post.getParent());
-                ps.setInt(4, threadId);
-                ps.setString(5, forumSlug);
-                ps.setTimestamp(6, created);
+                    ps.setString(1, post.getAuthor());
+                    ps.setString(2, post.getMessage());
+                    ps.setLong(3, post.getParent());
+                    ps.setInt(4, threadId);
+                    ps.setString(5, forumSlug);
+                    ps.setTimestamp(6, created);
+                    ps.setLong(7, ids.get(i));
 
-                post.setForum(forumSlug);
-                post.setCreated(created);
-                post.setThread(threadId);
+                    post.setForum(forumSlug);
+                    post.setCreated(created);
+                    post.setThread(threadId);
+                    post.setId(ids.get(i));
 
-            }
+                }
 
-            @Override
-            public int getBatchSize() {
-                return posts.size();
-            }
-        });
+                @Override
+                public int getBatchSize() {
+                    return posts.size();
+                }
+            });
+        } catch (DataIntegrityViolationException e) {
+            return new ResponseEntity(Error.getJson("Can't find post author"), HttpStatus.NOT_FOUND);
+        }
 
-
+//          UPDATE COUNT OF POST
+        String sqlUpdate = "UPDATE Forum SET posts = posts + ? WHERE slug = ?";
+        jdbcTemplate.update(sqlUpdate, posts.size(), thread.getForum());
 
 
         return new ResponseEntity(posts, HttpStatus.CREATED);
@@ -107,19 +119,37 @@ public class ThreadService {
 
     public ResponseEntity renameThread(String slug, int id, Thread thread) {
 
-        String sql = "UPDATE Thread SET message = ?, title = ? WHERE slug = ? OR id = ?";
-
-        int rowsAffected = jdbcTemplate.update(sql, thread.getMessage(), thread.getTitle(), slug, id);
-        if (rowsAffected == 0) {
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug), HttpStatus.NOT_FOUND);
+//      **************************************find thread**************************************
+        ResponseEntity responseEntity = findThread(slug, id, jdbcTemplate);
+        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+            return responseEntity;
+        }
+        Thread threadUpdated = (Thread) responseEntity.getBody();
+//      **************************************find thread**************************************
+        if (thread.getMessage() == null) {
+            thread.setMessage(threadUpdated.getMessage());
+        } else {
+            threadUpdated.setMessage(thread.getMessage());
         }
 
-        sql = "SELECT * from Thread WHERE slug = ? or id = ?";
+        if (thread.getTitle() == null) {
+            thread.setTitle(threadUpdated.getTitle());
+        } else {
+            threadUpdated.setTitle(thread.getTitle());
+        }
 
-        thread = (Thread) jdbcTemplate.queryForObject(
-                sql, new Object[] { slug, id }, new ThreadRowMapper());
+        try {
+            String sql = "UPDATE Thread SET message = ?, title = ? WHERE slug = ? OR id = ?";
 
-        return new ResponseEntity(thread, HttpStatus.OK);
+            int rowsAffected = jdbcTemplate.update(sql, thread.getMessage(), thread.getTitle(), threadUpdated.getSlug(), threadUpdated.getId());
+            if (rowsAffected == 0) {
+                return new ResponseEntity(Error.getJson("Can't find thread: " + slug), HttpStatus.NOT_FOUND);
+            }
+            
+            return new ResponseEntity(threadUpdated, HttpStatus.OK);
+        } catch (DataIntegrityViolationException e) {
+            return new ResponseEntity(threadUpdated, HttpStatus.OK);
+        }
 
     }
 
@@ -129,10 +159,21 @@ public class ThreadService {
         Thread thread;
 
         try {
+            ResponseEntity responseEntity;
+//          **************************************find user**************************************
+            responseEntity = findUser(vote.getNickname(), jdbcTemplate);
+            if (responseEntity.getStatusCode() != HttpStatus.OK) {
+                return responseEntity;
+            }
+//          **************************************find user**************************************
 
-            final String sql = "SELECT * from Thread WHERE slug = ? OR id = ?";
-            thread = (Thread) jdbcTemplate.queryForObject(
-                    sql, new Object[] { slug, id }, new ThreadRowMapper());
+//          **********************************find thread**************************************
+            responseEntity = findThread(slug, id, jdbcTemplate);
+            if (responseEntity.getStatusCode() != HttpStatus.OK) {
+                return responseEntity;
+            }
+            thread = (Thread) responseEntity.getBody();
+//          **************************************find thread**************************************
 
             threadSlug = thread.getSlug();
 
@@ -140,6 +181,8 @@ public class ThreadService {
 
             return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
                     HttpStatus.NOT_FOUND);
+        } catch (DataIntegrityViolationException e) {
+            return new ResponseEntity(Error.getJson("Can't find post author"), HttpStatus.NOT_FOUND);
         }
 
         int voiceForUpdate = vote.getVoice();
@@ -155,7 +198,7 @@ public class ThreadService {
 
             } else {    // voice changed.
 
-                final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE nickname = ? AND thread = ?";
+                final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE LOWER(nickname COLLATE \"ucs_basic\") = LOWER(? COLLATE \"ucs_basic\") AND LOWER(thread COLLATE \"ucs_basic\") = LOWER(? COLLATE \"ucs_basic\")";
                 jdbcTemplate.update(sqlUpdateVote, vote.getVoice(), vote.getNickname(), threadSlug);
 
                 voiceForUpdate = vote.getVoice() * 2;  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
@@ -191,11 +234,11 @@ public class ThreadService {
 
     public ResponseEntity getPosts(String slug, int id, Integer limit, Integer since, String sort, Boolean desc) {
 
-        String threadSlug;
+        int threadId;
         try {
 
-            final String sqlCheckForum = "SELECT slug from Thread WHERE slug = ? OR id = ?";
-            threadSlug = (String) jdbcTemplate.queryForObject(sqlCheckForum, new Object[]{ slug, id }, String.class);
+            final String sqlCheckForum = "SELECT id from Thread WHERE slug = ? OR id = ?";
+            threadId = (int) jdbcTemplate.queryForObject(sqlCheckForum, new Object[]{ slug, id }, Integer.class);
 
         } catch (EmptyResultDataAccessException e) {
 
@@ -205,7 +248,7 @@ public class ThreadService {
 
         final StringBuilder sql = new StringBuilder("SELECT * from Post WHERE thread = ?");
         final List<Object> args = new ArrayList<>();
-        args.add(threadSlug);
+        args.add(threadId);
 
         if (since != null) {
             sql.append(" AND id");
@@ -221,7 +264,7 @@ public class ThreadService {
         }
         if (sort != null) {
             if (sort.equals("flat")) {
-                sql.append(" ORDER BY created");
+                sql.append(" ORDER BY created, id");
             }
 
             if (desc == Boolean.TRUE) {
@@ -256,6 +299,7 @@ public class ThreadService {
         }
 
     }
+
 }
 
 
