@@ -47,7 +47,6 @@ public class ThreadService {
         }
         Thread thread = (Thread) responseEntity.getBody();
 //      **************************************find thread**************************************
-
         int threadId = thread.getId();
         String forumSlug = thread.getForum();
 
@@ -77,7 +76,8 @@ public class ThreadService {
         Timestamp created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
         try {
         final List<Long> ids = jdbcTemplate.query("SELECT nextval('post_id_seq') FROM generate_series(1, ?)", new Object[]{posts.size()}, (rs, rowNum) -> rs.getLong(1));
-        sql = "INSERT INTO Post(author, message, parent, thread, forum, created, id) VALUES(?,?,?,?,?,?,?)";
+        sql = "INSERT INTO Post(author, message, parent, thread, forum, created, id, path) VALUES(?,?,?,?,?,?,?," +
+                " (SELECT path FROM Post WHERE id = ?) || ?)";
         jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
 
                 @Override
@@ -92,6 +92,12 @@ public class ThreadService {
                     ps.setString(5, forumSlug);
                     ps.setTimestamp(6, created);
                     ps.setLong(7, ids.get(i));
+                    if (post.getParent() != 0) {
+                        ps.setLong(8, post.getParent());
+                    } else {
+                        ps.setLong(8, ids.get(i));
+                    }
+                    ps.setLong(9, ids.get(i));
 
                     post.setForum(forumSlug);
                     post.setCreated(created);
@@ -145,9 +151,10 @@ public class ThreadService {
             if (rowsAffected == 0) {
                 return new ResponseEntity(Error.getJson("Can't find thread: " + slug), HttpStatus.NOT_FOUND);
             }
-            
+
             return new ResponseEntity(threadUpdated, HttpStatus.OK);
         } catch (DataIntegrityViolationException e) {
+
             return new ResponseEntity(threadUpdated, HttpStatus.OK);
         }
 
@@ -234,23 +241,24 @@ public class ThreadService {
 
     public ResponseEntity getPosts(String slug, int id, Integer limit, Integer since, String sort, Boolean desc) {
 
-        int threadId;
-        try {
-
-            final String sqlCheckForum = "SELECT id from Thread WHERE slug = ? OR id = ?";
-            threadId = (int) jdbcTemplate.queryForObject(sqlCheckForum, new Object[]{ slug, id }, Integer.class);
-
-        } catch (EmptyResultDataAccessException e) {
-
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
-                    HttpStatus.NOT_FOUND);
+//      **************************************find thread**************************************
+        ResponseEntity responseEntity = findThread(slug, id, jdbcTemplate);
+        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+            return responseEntity;
         }
+        Thread thread = (Thread) responseEntity.getBody();
+//      **************************************find thread**************************************
 
-        final StringBuilder sql = new StringBuilder("SELECT * from Post WHERE thread = ?");
+        int threadId = thread.getId();
+        String descOrAsc = desc ? "DESC" : "ASC";
+
+
+        final StringBuilder sql = new StringBuilder("SELECT * from Post p WHERE thread = ?");
         final List<Object> args = new ArrayList<>();
         args.add(threadId);
 
         if (since != null) {
+
             sql.append(" AND id");
             if (desc == Boolean.TRUE) {
                 sql.append(" <");
@@ -259,17 +267,40 @@ public class ThreadService {
             }
 
             sql.append(" ?");
-
             args.add(since);
         }
+
+
         if (sort != null) {
+
             if (sort.equals("flat")) {
-                sql.append(" ORDER BY created, id");
+                sql.append(" ORDER BY created " + descOrAsc + " , id");
             }
 
-            if (desc == Boolean.TRUE) {
-                sql.append(" DESC");
+            if (sort.equals("tree")) {
+                sql.append(" ORDER BY path");
             }
+
+            if (sort.equals("parent_tree")) {
+                // id >/< ? для since
+                final String sqlFindVote = "SELECT count(id) FROM Post WHERE path[1] IN(" +
+                        "SELECT id FROM Post where thread = ? and parent = 0" +
+                        " GROUP BY id, path[1] HAVING COUNT(path[1]) <= ? order by id " + descOrAsc +")";
+                final int newLimit = (int) jdbcTemplate.queryForObject(
+                        sqlFindVote, new Object[]{threadId, limit.intValue()}, Integer.class);
+
+                sql.append(" ORDER BY path");
+                if (newLimit > limit) {
+                    limit = newLimit;
+                }
+            }
+
+        } else {
+            sql.append(" ORDER BY id");
+        }
+
+        if (desc == Boolean.TRUE) {
+            sql.append(" DESC");
         }
 
         if (limit != null) {
@@ -280,6 +311,7 @@ public class ThreadService {
         List<Post> posts = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), new PostRowMapper());
 
         return new ResponseEntity(posts, HttpStatus.OK);
+
     }
 
     public static ResponseEntity findThread(String slug, int id, JdbcTemplate jdbcTemplate) {
@@ -301,5 +333,4 @@ public class ThreadService {
     }
 
 }
-
 

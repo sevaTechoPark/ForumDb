@@ -3,6 +3,7 @@ package serverDb.post;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 
 import serverDb.error.Error;
@@ -32,16 +33,29 @@ public class PostService {
 
     public ResponseEntity editMessage(long id, Post post) {
 
-        final String sql = "UPDATE Post SET message = ?, isEdited = TRUE WHERE id = ?";
+        String message = post.getMessage();
+        ResponseEntity responseEntity = getPost(id, new String[]{"only post"});
+        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+            return responseEntity;
+        }
+        post = (Post) responseEntity.getBody();
 
-        int rowsAffected = jdbcTemplate.update(sql, post.getMessage(), id);
-        if (rowsAffected == 0) {
-            return new ResponseEntity(Error.getJson("Can't find post: " + id), HttpStatus.NOT_FOUND);
+        try {
+
+            if (message != null && !message.equals(post.getMessage())) {
+                final String sql = "UPDATE Post SET message = ?, isEdited = TRUE WHERE id = ?";
+                jdbcTemplate.update(sql, message, id);
+                post.setMessage(message);
+                post.setEdited(Boolean.TRUE);
+            }
+
+            return new ResponseEntity(post.getJson(), HttpStatus.OK);
+
+        } catch (DataIntegrityViolationException e) {
+
+            return new ResponseEntity(post.getJson(), HttpStatus.OK);
         }
 
-        post = (Post) getPost(id, new String[]{"only post"}).getBody();
-
-        return new ResponseEntity(post.getJson(), HttpStatus.OK);
     }
 
     public ResponseEntity getPost(long id, String[] related) {
