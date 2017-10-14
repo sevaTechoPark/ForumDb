@@ -250,23 +250,49 @@ public class ThreadService {
 //      **************************************find thread**************************************
 
         int threadId = thread.getId();
-        String descOrAsc = desc ? "DESC" : "ASC";
+        String descOrAsc = desc ? " DESC" : " ASC";
+        String moreOrLess = desc ? " <" : " >";
 
 
-        final StringBuilder sql = new StringBuilder("SELECT * from Post p WHERE thread = ?");
+        final StringBuilder sql = new StringBuilder("SELECT * from Post WHERE thread = ?");
         final List<Object> args = new ArrayList<>();
+
         args.add(threadId);
 
         if (since != null) {
 
-            sql.append(" AND id");
-            if (desc == Boolean.TRUE) {
-                sql.append(" <");
+            if (sort != null && sort.equals("tree")) {
+                sql.append(" AND path");
+            } else if (sort != null && sort.equals("parent_tree")) {
+                sql.append(" AND path[1]");
             } else {
-                sql.append(" >");
+                sql.append(" AND id");
+            }
+        }
+
+        if (limit != null && sort != null && sort.equals("parent_tree")) {
+            if (since == null) {
+                sql.append(" AND path[1]");
+            }
+            sql.append(" IN (SELECT id FROM Post WHERE thread = ? AND parent = 0");
+            args.add(threadId);
+            if (since != null) {
+                sql.append(" AND path[1] ");
+            }
+        }
+
+        if (since != null) {
+
+            sql.append(moreOrLess);
+
+            if (sort != null && sort.equals("tree")) {
+                sql.append(" (SELECT path FROM Post where id = ?)");
+            } else if(sort != null && sort.equals("parent_tree")) {
+                sql.append(" (SELECT path[1] FROM Post where id = ?)");
+            } else {
+                sql.append(" ?");
             }
 
-            sql.append(" ?");
             args.add(since);
         }
 
@@ -282,30 +308,29 @@ public class ThreadService {
             }
 
             if (sort.equals("parent_tree")) {
-                // id >/< ? для since
-                final String sqlFindVote = "SELECT count(id) FROM Post WHERE path[1] IN(" +
-                        "SELECT id FROM Post where thread = ? and parent = 0" +
-                        " GROUP BY id, path[1] HAVING COUNT(path[1]) <= ? order by id " + descOrAsc +")";
-                final int newLimit = (int) jdbcTemplate.queryForObject(
-                        sqlFindVote, new Object[]{threadId, limit.intValue()}, Integer.class);
+
+                if (limit != null) {
+                    sql.append(" order by id " + descOrAsc +" LIMIT ?)");
+                    args.add(limit.intValue());
+                }
 
                 sql.append(" ORDER BY path");
-                if (newLimit > limit) {
-                    limit = newLimit;
-                }
             }
 
         } else {
             sql.append(" ORDER BY id");
         }
 
-        if (desc == Boolean.TRUE) {
-            sql.append(" DESC");
-        }
+
+        sql.append(descOrAsc);
 
         if (limit != null) {
-            sql.append(" LIMIT ?");
-            args.add(limit.intValue());
+            if (sort != null && sort.equals("parent_tree")) {
+                // NO LIMIT HERE
+            } else {
+                sql.append(" LIMIT ?");
+                args.add(limit.intValue());
+            }
         }
 
         List<Post> posts = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), new PostRowMapper());

@@ -165,31 +165,28 @@ public class ForumService {
 
     public ResponseEntity getUsers(String slug, Integer limit, String since, Boolean desc) {
 
-        try {
+//      **************************************find forum**************************************
 
-            final String sqlCheckForum = "SELECT slug from Forum WHERE slug = ?";
-            jdbcTemplate.queryForObject(sqlCheckForum, new Object[]{ slug }, String.class);
-
-        } catch (EmptyResultDataAccessException e) {
-
-            return new ResponseEntity(Error.getJson("Can't find forum: " + slug),
-                    HttpStatus.NOT_FOUND);
+        ResponseEntity responseEntity = findForum(slug, jdbcTemplate);
+        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+            return responseEntity;
         }
-
-//      Получение списка пользователей, у которых есть пост или ветка обсуждения в данном форуме.
-//      выводит дважды пользователей которые и ветку создавали и пост(исправить)
-        final StringBuilder sql = new StringBuilder("" +
+        Forum forum = (Forum) responseEntity.getBody();
+//      **************************************find forum**************************************
+        slug = forum.getSlug();
+        
+        final StringBuilder sql = new StringBuilder("SELECT * FROM (" +
                 "SELECT DISTINCT u1.nickname, u1.email, u1.about, u1.fullname " +
                 "FROM FUser u1 JOIN Thread on(Thread.author = u1.nickname AND Thread.forum = ?) " +
-                "UNION ALL " +
+                "UNION " +
                 "SELECT DISTINCT u2.nickname, u2.email, u2.about, u2.fullname " +
-                "FROM FUser u2 JOIN Post on(Post.author = u2.nickname AND Post.forum = ?) ");
+                "FROM FUser u2 JOIN Post on(Post.author = u2.nickname AND Post.forum = ?)) as f  ");
         final List<Object> args = new ArrayList<>();
         args.add(slug);
         args.add(slug);
 
         if (since != null) {
-            sql.append(" where LOWER(nickname COLLATE \"ucs_basic\")");
+            sql.append(" where LOWER(f.nickname COLLATE \"ucs_basic\")");
             if (desc == Boolean.TRUE) {
                 sql.append(" <");
             } else {
@@ -200,7 +197,7 @@ public class ForumService {
 
             args.add(since);
         }
-        sql.append(" ORDER BY nickname"); //  ORDER BY LOWER(nickname COLLATE "ucs_basic") doesn't work!
+        sql.append(" ORDER BY LOWER(f.nickname COLLATE \"ucs_basic\")"); //  ORDER BY LOWER(nickname COLLATE "ucs_basic") doesn't work!
         if (desc == Boolean.TRUE) {
             sql.append(" DESC");
         }
