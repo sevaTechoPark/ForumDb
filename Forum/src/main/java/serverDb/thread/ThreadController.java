@@ -12,7 +12,7 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/thread")
+@RequestMapping("/api/thread")
 public class ThreadController {
 
     private ThreadService threadService;

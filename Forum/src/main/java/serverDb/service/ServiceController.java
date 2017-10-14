@@ -8,7 +8,7 @@ import serverDb.post.Post;
 
 
 @RestController
-@RequestMapping("/service")
+@RequestMapping("/api/service")
 public class ServiceController {
 
     private ServiceService serviceService;

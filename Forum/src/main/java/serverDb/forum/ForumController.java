@@ -13,7 +13,7 @@ import java.time.ZonedDateTime;
 
 
 @RestController
-@RequestMapping("/forum")
+@RequestMapping("/api/forum")
 public class ForumController {
 
     private ForumService forumService;
