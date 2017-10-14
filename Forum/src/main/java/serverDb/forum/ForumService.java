@@ -174,7 +174,7 @@ public class ForumService {
         Forum forum = (Forum) responseEntity.getBody();
 //      **************************************find forum**************************************
         slug = forum.getSlug();
-        
+
         final StringBuilder sql = new StringBuilder("SELECT * FROM (" +
                 "SELECT DISTINCT u1.nickname, u1.email, u1.about, u1.fullname " +
                 "FROM FUser u1 JOIN Thread on(Thread.author = u1.nickname AND Thread.forum = ?) " +
