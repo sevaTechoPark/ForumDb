@@ -1,14 +1,14 @@
 # IntelliJ #
-Forum/out/
-Forum/target/
-Forum/.idea/*
+/Forum/out/
+/Forum/target/
+/Forum/.idea/*
 
 # Package Files #
-Forum/*.jar
-Forum/*.war
-Forum/*.ear
-Forum/*.iml
-Forum/*.class
+/Forum/*.jar
+/Forum/*.war
+/Forum/*.ear
+/Forum/*.iml
+/Forum/*.class
 
 # Java #
-Forum/*.class
+/Forum/*.class
