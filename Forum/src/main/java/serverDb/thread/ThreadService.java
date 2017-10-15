@@ -47,6 +47,10 @@ public class ThreadService {
         }
         Thread thread = (Thread) responseEntity.getBody();
 //      **************************************find thread**************************************
+        if (posts.isEmpty()) {
+            return new ResponseEntity(posts, HttpStatus.CREATED);
+        }
+        
         int threadId = thread.getId();
         String forumSlug = thread.getForum();
 
