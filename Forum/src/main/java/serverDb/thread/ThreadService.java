@@ -50,9 +50,10 @@ public class ThreadService {
         if (posts.isEmpty()) {
             return new ResponseEntity(posts, HttpStatus.CREATED);
         }
-        
+
         int threadId = thread.getId();
         String forumSlug = thread.getForum();
+        int forumId = thread.getForumId();
 
         String sql;
         sql = "SELECT count(id) from Post WHERE thread = ? AND parent = 0";
@@ -80,8 +81,8 @@ public class ThreadService {
         Timestamp created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
         try {
         final List<Long> ids = jdbcTemplate.query("SELECT nextval('post_id_seq') FROM generate_series(1, ?)", new Object[]{posts.size()}, (rs, rowNum) -> rs.getLong(1));
-        sql = "INSERT INTO Post(author, message, parent, thread, forum, created, id, path) VALUES(?,?,?,?,?,?,?," +
-                " (SELECT path FROM Post WHERE id = ?) || ?)";
+        sql = "INSERT INTO Post(author, message, parent, thread, forum, created, id, path, forumId) VALUES(?,?,?,?,?,?,?," +
+                " (SELECT path FROM Post WHERE id = ?) || ?, ?)";
         jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
 
                 @Override
@@ -102,6 +103,8 @@ public class ThreadService {
                         ps.setLong(8, ids.get(i));
                     }
                     ps.setLong(9, ids.get(i));
+                    ps.setLong(10, forumId);
+
 
                     post.setForum(forumSlug);
                     post.setCreated(created);
@@ -122,7 +125,6 @@ public class ThreadService {
 //          UPDATE COUNT OF POST
         String sqlUpdate = "UPDATE Forum SET posts = posts + ? WHERE slug = ?";
         jdbcTemplate.update(sqlUpdate, posts.size(), thread.getForum());
-
 
         return new ResponseEntity(posts, HttpStatus.CREATED);
     }
@@ -149,9 +151,9 @@ public class ThreadService {
         }
 
         try {
-            String sql = "UPDATE Thread SET message = ?, title = ? WHERE slug = ? OR id = ?";
+            String sql = "UPDATE Thread SET message = ?, title = ? WHERE id = ?";
 
-            int rowsAffected = jdbcTemplate.update(sql, thread.getMessage(), thread.getTitle(), threadUpdated.getSlug(), threadUpdated.getId());
+            int rowsAffected = jdbcTemplate.update(sql, thread.getMessage(), thread.getTitle(), threadUpdated.getId());
             if (rowsAffected == 0) {
                 return new ResponseEntity(Error.getJson("Can't find thread: " + slug), HttpStatus.NOT_FOUND);
             }
@@ -166,51 +168,42 @@ public class ThreadService {
 
     public ResponseEntity voteThread(String slug, int id, Vote vote) {
 
-        String threadSlug;
-        Thread thread;
 
-        try {
-            ResponseEntity responseEntity;
-//          **************************************find user**************************************
-            responseEntity = findUser(vote.getNickname(), jdbcTemplate);
-            if (responseEntity.getStatusCode() != HttpStatus.OK) {
-                return responseEntity;
-            }
-//          **************************************find user**************************************
-
-//          **********************************find thread**************************************
-            responseEntity = findThread(slug, id, jdbcTemplate);
-            if (responseEntity.getStatusCode() != HttpStatus.OK) {
-                return responseEntity;
-            }
-            thread = (Thread) responseEntity.getBody();
-//          **************************************find thread**************************************
-
-            threadSlug = thread.getSlug();
-
-        } catch (EmptyResultDataAccessException e) {
-
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
-                    HttpStatus.NOT_FOUND);
-        } catch (DataIntegrityViolationException e) {
-            return new ResponseEntity(Error.getJson("Can't find post author"), HttpStatus.NOT_FOUND);
+        ResponseEntity responseEntity;
+//      **************************************find user**************************************
+        responseEntity = findUser(vote.getNickname(), jdbcTemplate);
+        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+            return responseEntity;
         }
+        User user = (User) responseEntity.getBody();
+//      **************************************find user**************************************
+
+//      **********************************find thread**************************************
+        responseEntity = findThread(slug, id, jdbcTemplate);
+        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+            return responseEntity;
+        }
+        Thread thread = (Thread) responseEntity.getBody();
+//      **************************************find thread**************************************
+
+        int threadId = thread.getId();
+        int userId = user.getId();
 
         int voiceForUpdate = vote.getVoice();
 
         try {   // user has voted
 
-            final String sqlFindVote = "SELECT voice from Vote WHERE nickname = ? AND thread = ?";
+            final String sqlFindVote = "SELECT voice from Vote WHERE userId = ? AND treadId = ?";
             final int voice = (int) jdbcTemplate.queryForObject(
-                    sqlFindVote, new Object[]{vote.getNickname(), threadSlug}, Integer.class);
+                    sqlFindVote, new Object[]{userId, threadId}, Integer.class);
 
             if (vote.getVoice() == voice) { // his voice doesn't change
                 return new ResponseEntity(thread, HttpStatus.OK);
 
             } else {    // voice changed.
 
-                final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE LOWER(nickname COLLATE \"ucs_basic\") = LOWER(? COLLATE \"ucs_basic\") AND LOWER(thread COLLATE \"ucs_basic\") = LOWER(? COLLATE \"ucs_basic\")";
-                jdbcTemplate.update(sqlUpdateVote, vote.getVoice(), vote.getNickname(), threadSlug);
+                final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE userId = ? AND treadId = ?";
+                jdbcTemplate.update(sqlUpdateVote, vote.getVoice(), userId, threadId);
 
                 voiceForUpdate = vote.getVoice() * 2;  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
 
@@ -218,14 +211,15 @@ public class ThreadService {
 
         } catch (EmptyResultDataAccessException e) {    // user hasn't voted
 
-            final String sqlInsertVote = "INSERT INTO Vote(nickname, voice, thread) VALUES(?,?,?)";
+            final String sqlInsertVote = "INSERT INTO Vote(userId, voice, treadId) VALUES(?,?,?)";
 
-            jdbcTemplate.update(sqlInsertVote, new Object[]{vote.getNickname(), vote.getVoice(), threadSlug});
+            jdbcTemplate.update(sqlInsertVote, new Object[]{userId, vote.getVoice(), threadId});
+
         }
 
-        final String sql = "UPDATE Thread SET votes = votes + ? WHERE slug = ?";
+        final String sql = "UPDATE Thread SET votes = votes + ? WHERE id = ?";
 
-        jdbcTemplate.update(sql, voiceForUpdate, threadSlug); // update threads
+        jdbcTemplate.update(sql, voiceForUpdate, threadId); // update threads
 
         thread.setVotes(thread.getVotes() + voiceForUpdate);
 
@@ -347,7 +341,7 @@ public class ThreadService {
 
         try {
 
-            final String sql = "SELECT * from Thread WHERE LOWER(slug COLLATE \"ucs_basic\") = LOWER(? COLLATE \"ucs_basic\") OR id = ?";
+            final String sql = "SELECT * from Thread WHERE slug::citext = ?::citext OR id = ?";
             Thread thread = (Thread) jdbcTemplate.queryForObject(
                     sql, new Object[] { slug, id }, new ThreadRowMapper());
 

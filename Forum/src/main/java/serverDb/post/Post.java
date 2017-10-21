@@ -52,6 +52,7 @@ public class Post {
         return created.toInstant().toString();
     }
 
+    @JsonProperty("isEdited")
     public boolean isEdited() {
         return isEdited;
     }

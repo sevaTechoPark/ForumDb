@@ -4,11 +4,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 
-import org.springframework.jdbc.core.PreparedStatementCreator;
-import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import serverDb.error.Error;
 import serverDb.thread.Thread;
 import serverDb.thread.ThreadRowMapper;
@@ -53,8 +48,8 @@ public class ForumService {
 
             forum.setUser(user.getNickname());
 
-            final String sql = "INSERT INTO Forum(slug, title, \"user\") VALUES(?,?,?)";
-            jdbcTemplate.update(sql, new Object[] { forum.getSlug(), forum.getTitle(), forum.getUser() });
+            final String sql = "INSERT INTO Forum(slug, title, \"user\", userId) VALUES(?,?,?,?)";
+            jdbcTemplate.update(sql, new Object[] { forum.getSlug(), forum.getTitle(), forum.getUser(), user.getId() });
 
             return new ResponseEntity(forum, HttpStatus.CREATED);
 
@@ -73,39 +68,29 @@ public class ForumService {
 
     public ResponseEntity createThread(String forum_slug, Thread thread) {
 
+//      **************************************find user**************************************
+        ResponseEntity responseEntity = findUser(thread.getAuthor(), jdbcTemplate);
+        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+            return responseEntity;
+        }
+        User user = (User) responseEntity.getBody();
+//      **************************************find user**************************************
+
+        thread.setAuthor(user.getNickname());
+
+//      **************************************find forum**************************************
+        responseEntity = findForum(forum_slug, jdbcTemplate);
+        if (responseEntity.getStatusCode() != HttpStatus.OK) {
+            return responseEntity;
+        }
+        Forum forum = (Forum) responseEntity.getBody();
+//      **************************************find forum**************************************
+
+        int id = (int) jdbcTemplate.queryForObject("SELECT nextval('thread_id_seq')", Integer.class);
         try {
-
-//          **************************************find user**************************************
-            ResponseEntity responseEntity = findUser(thread.getAuthor(), jdbcTemplate);
-            if (responseEntity.getStatusCode() != HttpStatus.OK) {
-                return responseEntity;
-            }
-            User user = (User) responseEntity.getBody();
-//          **************************************find user**************************************
-
-            thread.setAuthor(user.getNickname());
-
-//          **************************************find forum**************************************
-            responseEntity = findForum(forum_slug, jdbcTemplate);
-            if (responseEntity.getStatusCode() != HttpStatus.OK) {
-                return responseEntity;
-            }
-            Forum forum = (Forum) responseEntity.getBody();
-//          **************************************find forum**************************************
-            int id = (int) jdbcTemplate.queryForObject("SELECT nextval('thread_id_seq')", Integer.class);
-
-            final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum, id) VALUES(?,?,?,?,?,?,?)";
+            final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum, id, userId, forumId) VALUES(?,?,?,?,?,?,?,?,?)";
             jdbcTemplate.update(sql, new Object[] { thread.getSlug(), thread.getTitle(), thread.getAuthor(),
-                    thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug(), id});
-
-            thread.setId(id);
-            thread.setForum(forum.getSlug());
-//          UPDATE COUNT OF THREADS
-            String sqlUpdate = "UPDATE Forum SET threads = threads + 1 WHERE slug = ?";
-            jdbcTemplate.update(sqlUpdate, forum.getSlug());
-
-            return new ResponseEntity(thread, HttpStatus.CREATED);
-
+                    thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug(), id, user.getId(), forum.getId()});
         } catch (DuplicateKeyException e) {
 
             Thread duplicateThread = (Thread) findThread(thread.getSlug(), -1, jdbcTemplate).getBody();
@@ -113,6 +98,15 @@ public class ForumService {
             return new ResponseEntity(duplicateThread, HttpStatus.CONFLICT);
 
         }
+        thread.setId(id);
+        thread.setForum(forum.getSlug());
+//      UPDATE COUNT OF THREADS
+        String sqlUpdate = "UPDATE Forum SET threads = threads + 1 WHERE slug = ?";
+        jdbcTemplate.update(sqlUpdate, forum.getSlug());
+
+        return new ResponseEntity(thread, HttpStatus.CREATED);
+
+
 
     }
 
@@ -129,16 +123,17 @@ public class ForumService {
 
     public ResponseEntity getThreads(String slug, Integer limit, String since, Boolean desc) throws ParseException {
 
-//          **************************************find forum**************************************
+//      **************************************find forum**************************************
         ResponseEntity responseEntity = findForum(slug, jdbcTemplate);
         if (responseEntity.getStatusCode() != HttpStatus.OK) {
             return responseEntity;
         }
-//          **************************************find forum**************************************
+//      **************************************find forum**************************************
+        Forum forum = (Forum) responseEntity.getBody();
 
-        final StringBuilder sql = new StringBuilder("SELECT * from Thread WHERE LOWER(forum COLLATE \"ucs_basic\") = LOWER(? COLLATE \"ucs_basic\")");
+        final StringBuilder sql = new StringBuilder("SELECT * from Thread WHERE forumId = ?");
         final List<Object> args = new ArrayList<>();
-        args.add(slug);
+        args.add(forum.getId());
 
         if (since != null) {
             sql.append(" AND created");
@@ -173,31 +168,31 @@ public class ForumService {
         }
         Forum forum = (Forum) responseEntity.getBody();
 //      **************************************find forum**************************************
-        slug = forum.getSlug();
+        int id = forum.getId();
 
         final StringBuilder sql = new StringBuilder("SELECT * FROM (" +
-                "SELECT DISTINCT u1.nickname, u1.email, u1.about, u1.fullname " +
-                "FROM FUser u1 JOIN Thread on(Thread.author = u1.nickname AND Thread.forum = ?) " +
-                "UNION " +
-                "SELECT DISTINCT u2.nickname, u2.email, u2.about, u2.fullname " +
-                "FROM FUser u2 JOIN Post on(Post.author = u2.nickname AND Post.forum = ?)) as f  ");
+                " SELECT u1.* " +
+                " FROM FUser u1 JOIN Thread on(userId = u1.id) WHERE forumId = ?" +
+                " UNION " +
+                " SELECT u2.* " +
+                " FROM FUser u2 JOIN Post on(Post.author = u2.nickname) WHERE Post.forumId = ?) as f  ");
         final List<Object> args = new ArrayList<>();
-        args.add(slug);
-        args.add(slug);
+        args.add(id);
+        args.add(id);
 
         if (since != null) {
-            sql.append(" where LOWER(f.nickname COLLATE \"ucs_basic\")");
+            sql.append(" where f.nickname::citext");
             if (desc == Boolean.TRUE) {
                 sql.append(" <");
             } else {
                 sql.append(" >");
             }
 
-            sql.append(" LOWER(? COLLATE \"ucs_basic\")");
+            sql.append(" ?::citext");
 
             args.add(since);
         }
-        sql.append(" ORDER BY LOWER(f.nickname COLLATE \"ucs_basic\")"); //  ORDER BY LOWER(nickname COLLATE "ucs_basic") doesn't work!
+        sql.append(" ORDER BY f.nickname::citext"); //  ORDER BY LOWER(nickname COLLATE "ucs_basic") doesn't work!
         if (desc == Boolean.TRUE) {
             sql.append(" DESC");
         }
@@ -216,8 +211,8 @@ public class ForumService {
 
         try {
 
-            final String sql = "SELECT * from Forum WHERE LOWER(slug COLLATE \"ucs_basic\") = LOWER(? COLLATE \"ucs_basic\")";
-            Forum forum = (Forum) jdbcTemplate.queryForObject(
+            final String sql = "SELECT * from Forum WHERE slug::citext = ?::citext";
+            Forum forum = jdbcTemplate.queryForObject(
                     sql, new Object[] { slug }, new ForumRowMapper());
 
             return new ResponseEntity(forum, HttpStatus.OK);

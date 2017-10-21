@@ -8,6 +8,7 @@ public class Vote {
 
     private String nickname;
     private int voice;
+    private int id;
 
     @JsonCreator
     public Vote(@JsonProperty("nickname") String nickname, @JsonProperty("voice") int voice) {
@@ -20,12 +21,20 @@ public class Vote {
 
     }
 
+    public int getId() {
+        return id;
+    }
+
     public String getNickname() {
         return nickname;
     }
 
     public int getVoice() {
         return voice;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public void setNickname(String nickname) {

@@ -14,6 +14,7 @@ public class User {
     private String about;
     private String fullname;
     private String nickname;
+    private int id;
 
     @JsonCreator
     public User(@JsonProperty("email") String email, @JsonProperty("about") String about,
@@ -27,6 +28,10 @@ public class User {
 
     public User() {
 
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getEmail() {
@@ -43,6 +48,10 @@ public class User {
 
     public String getNickname() {
         return nickname;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public void setEmail(String email) {

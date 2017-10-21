@@ -32,8 +32,8 @@ public class UserService{
 
         } catch (DuplicateKeyException e) {
 
-            final String sql = "SELECT * FROM FUser WHERE LOWER(nickname COLLATE \"ucs_basic\") =  LOWER(? COLLATE \"ucs_basic\") " +
-                    "OR LOWER(email COLLATE \"ucs_basic\") =  LOWER(? COLLATE \"ucs_basic\")";
+            final String sql = "SELECT * FROM FUser WHERE nickname::citext =  ?::citext"
+                    + " OR email::citext =  ?::citext";
 
             List<User> users = jdbcTemplate.query(sql, new Object[] { user.getNickname(), user.getEmail() }, new UserRowMapper());
 
@@ -63,7 +63,7 @@ public class UserService{
                 user.setFullname(oldUser.getFullname());
             }
 
-            final String sql = "UPDATE FUser SET email = ?, fullname = ?, about = ? WHERE  LOWER(nickname COLLATE \"ucs_basic\") =  LOWER(? COLLATE \"ucs_basic\")";
+            final String sql = "UPDATE FUser SET email = ?, fullname = ?, about = ? WHERE  nickname::citext =  ?::citext";
             jdbcTemplate.update(sql, user.getEmail(), user.getFullname(), user.getAbout(), user.getNickname());
 
             return new ResponseEntity(user, HttpStatus.OK);
@@ -89,8 +89,8 @@ public class UserService{
 
         try {
 
-            final String sql = "SELECT * from FUser WHERE  LOWER(nickname COLLATE \"ucs_basic\") =  LOWER(? COLLATE \"ucs_basic\")";
-            User user = (User) jdbcTemplate.queryForObject(
+            final String sql = "SELECT * from FUser WHERE  nickname::citext =  ?::citext";
+            User user = jdbcTemplate.queryForObject(
                     sql, new Object[]{ nickname }, new UserRowMapper());
 
             return new ResponseEntity(user, HttpStatus.OK);

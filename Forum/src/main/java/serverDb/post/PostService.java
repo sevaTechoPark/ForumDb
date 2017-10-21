@@ -49,11 +49,11 @@ public class PostService {
                 post.setEdited(Boolean.TRUE);
             }
 
-            return new ResponseEntity(post.getJson(), HttpStatus.OK);
+            return new ResponseEntity(post, HttpStatus.OK);
 
         } catch (DataIntegrityViolationException e) {
 
-            return new ResponseEntity(post.getJson(), HttpStatus.OK);
+            return new ResponseEntity(post, HttpStatus.OK);
         }
 
     }
@@ -67,7 +67,7 @@ public class PostService {
 
             String sql;
             sql = "SELECT * from Post WHERE id = ?";
-            Post post = (Post) jdbcTemplate.queryForObject(sql, new Object[] { id }, new PostRowMapper());
+            Post post = jdbcTemplate.queryForObject(sql, new Object[] { id }, new PostRowMapper());
 
             if (Arrays.asList(related).contains("only post")) {
                 return new ResponseEntity(post, HttpStatus.OK);
@@ -78,7 +78,7 @@ public class PostService {
             if (Arrays.asList(related).contains("thread")) {
 
                 sql = "SELECT * from Thread WHERE id = ?";
-                Thread thread = (Thread) jdbcTemplate.queryForObject(sql, new Object[] { post.getThread() },
+                Thread thread = jdbcTemplate.queryForObject(sql, new Object[] { post.getThread() },
                         new ThreadRowMapper());
 
                 responseBody.set("thread", thread.getJson());
@@ -88,7 +88,7 @@ public class PostService {
             if (Arrays.asList(related).contains("user")) {
 
                 sql = "SELECT * from FUser WHERE nickname = ?";
-                User user = (User) jdbcTemplate.queryForObject(sql, new Object[] { post.getAuthor() },
+                User user = jdbcTemplate.queryForObject(sql, new Object[] { post.getAuthor() },
                         new UserRowMapper());
 
                 responseBody.set("author", user.getJson());
@@ -98,7 +98,7 @@ public class PostService {
             if (Arrays.asList(related).contains("forum")) {
 
                 sql = "SELECT * from Forum WHERE slug = ?";
-                Forum forum = (Forum) jdbcTemplate.queryForObject(sql, new Object[] { post.getForum() },
+                Forum forum = jdbcTemplate.queryForObject(sql, new Object[] { post.getForum() },
                         new ForumRowMapper());
 
                 responseBody.set("forum", forum.getJson());

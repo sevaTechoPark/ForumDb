@@ -5,8 +5,8 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class PostRowMapper implements RowMapper {
-    public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+public class PostRowMapper implements RowMapper<Post> {
+    public Post mapRow(ResultSet rs, int rowNum) throws SQLException {
         Post post = new Post();
 
         post.setId(rs.getLong("id"));

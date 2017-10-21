@@ -5,8 +5,8 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class ForumRowMapper implements RowMapper {
-    public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+public class ForumRowMapper implements RowMapper<Forum> {
+    public Forum mapRow(ResultSet rs, int rowNum) throws SQLException {
         Forum forum = new Forum();
 
         forum.setPosts(rs.getInt("posts"));
@@ -14,6 +14,7 @@ public class ForumRowMapper implements RowMapper {
         forum.setTitle(rs.getString("title"));
         forum.setUser(rs.getString("user"));
         forum.setSlug(rs.getString("slug"));
+        forum.setId(rs.getInt("id"));
 
         return forum;
     }

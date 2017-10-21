@@ -26,6 +26,7 @@ public class Thread {
     private String title;
     private int votes;
     private int id;
+    private int forumId;
 
 
     @JsonCreator
@@ -50,6 +51,10 @@ public class Thread {
 
     }
 
+    public int getForumId() {
+        return forumId;
+    }
+
     public int getId() {
         return id;
     }   // bug tests
@@ -61,7 +66,6 @@ public class Thread {
     public String getForum() {
         return forum;
     }
-
 
     @JsonIgnore
     public Timestamp getCreatedTimestamp() {
@@ -92,6 +96,9 @@ public class Thread {
         this.id = id;
     }
 
+    public void setForumId(int forumId) {
+        this.forumId = forumId;
+    }
 
     public void setAuthor(String author) {
         this.author = author;

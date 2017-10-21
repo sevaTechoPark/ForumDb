@@ -15,6 +15,7 @@ public class Forum {
     private String slug;
     private int threads;
     private long posts;
+    private int id;
 
     @JsonCreator
     public Forum(@JsonProperty("slug") String slug, @JsonProperty("title") String title,
@@ -28,6 +29,10 @@ public class Forum {
 
     public Forum() {
 
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getUser() {
@@ -50,6 +55,9 @@ public class Forum {
         return posts;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public void setUser(String user) {
         this.user = user;
