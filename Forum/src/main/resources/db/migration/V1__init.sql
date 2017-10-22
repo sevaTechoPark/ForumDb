@@ -1,4 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 
 CREATE TABLE FUser(
   id SERIAL4 PRIMARY KEY,
@@ -62,18 +63,48 @@ CREATE TABLE Post(
   FOREIGN KEY (forumId) REFERENCES Forum(id)
 );
 
-CREATE INDEX post_forum ON Post(forumId);
-CREATE INDEX post_author ON Post(userId);
+-- after pg_stat_statements
+CREATE INDEX post_thread_created ON Post(thread, created);
+CREATE INDEX post_created_thread ON Post(created, thread);
+CREATE INDEX post_thread_parent ON Post(thread, parent);
+CREATE INDEX post_parent_thread ON Post(parent, thread);
+
+CREATE INDEX post_path_thread ON Post(path, thread);
+CREATE INDEX post_thread_path ON Post(thread, path);
+--
+
+CREATE INDEX post_forumId ON Post(forumId);
+CREATE INDEX post_authorId ON Post(userId);
 CREATE INDEX post_thread ON Post(thread);
-CREATE INDEX post_path ON Post(path);
-CREATE INDEX post_level ON Post(array_length(path, 1));
+
 
 CREATE TABLE Vote(
   id SERIAL4 PRIMARY KEY,
-  userId int4 references FUser(id),
-  treadId int4 references Thread(id),
+  userId int4,
+  treadId int4,
+  FOREIGN KEY (userId) REFERENCES FUser(id),
+  FOREIGN KEY (treadId) REFERENCES Thread(id),
   voice INT2 DEFAULT 0
 );
 
 CREATE INDEX vote_userId ON Vote(userId);
 CREATE INDEX vote_threadId ON Vote(treadId);
+
+CREATE TABLE ForumUsers(
+  id SERIAL4 PRIMARY KEY,
+  userId int4,
+  forumId int4,
+  FOREIGN KEY (userId) REFERENCES FUser(id),
+  FOREIGN KEY (forumId) REFERENCES Forum(id)
+);
+
+CREATE OR REPLACE FUNCTION insert_ForumUsers() RETURNS TRIGGER AS '
+BEGIN
+  INSERT INTO ForumUsers(userId, forumId) VALUES (NEW.userId, NEW.forumId) ON CONFLICT DO NOTHING;
+  RETURN NEW;
+END;
+' LANGUAGE plpgsql;
+
+
+CREATE TRIGGER post_insert_trigger AFTER INSERT ON Post
+FOR EACH ROW EXECUTE PROCEDURE insert_ForumUsers();

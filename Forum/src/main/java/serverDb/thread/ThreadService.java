@@ -56,10 +56,15 @@ public class ThreadService {
         int forumId = thread.getForumId();
 
         String sql;
-        sql = "SELECT count(id) from Post WHERE thread = ? AND parent = 0";
+        sql = "SELECT id from Post WHERE thread = ? AND parent = 0 LIMIT 1";
 
-        boolean flag = (0 == (int) jdbcTemplate.queryForObject(sql,new Object[] { threadId }, Integer.class))
-                ? Boolean.FALSE : Boolean.TRUE;
+        boolean flag;
+        try {
+            int _id = (int) jdbcTemplate.queryForObject(sql,new Object[] { threadId }, Integer.class);
+            flag = Boolean.TRUE;
+        } catch (EmptyResultDataAccessException e) {
+            flag = Boolean.FALSE;
+        }
 
         if(flag == Boolean.FALSE) { // may be in current posts will be parent post
             ListIterator<Post> listIter = posts.listIterator();
