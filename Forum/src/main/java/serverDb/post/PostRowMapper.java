@@ -10,6 +10,8 @@ public class PostRowMapper implements RowMapper<Post> {
         Post post = new Post();
 
         post.setId(rs.getLong("id"));
+        post.setUserId(rs.getLong("userId"));
+        post.setForumId(rs.getLong("forumId"));
         post.setForum(rs.getString("forum"));
         post.setAuthor(rs.getString("author"));
         post.setThread(rs.getInt("thread"));

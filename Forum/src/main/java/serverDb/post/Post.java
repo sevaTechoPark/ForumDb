@@ -21,6 +21,8 @@ public class Post {
     private boolean isEdited;
     private String message;
     private long parent;
+    private long userId;
+    private long forumId;
 
     @JsonCreator
     public Post(@JsonProperty("author") String author, @JsonProperty("message") String message,
@@ -34,6 +36,14 @@ public class Post {
 
     public Post() {
 
+    }
+
+    public long getUserId() {
+        return userId;
+    }
+
+    public long getForumId() {
+        return forumId;
     }
 
     public long getId() {
@@ -67,6 +77,14 @@ public class Post {
 
     public int getThread() {
         return thread;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
+
+    public void setForumId(long forumId) {
+        this.forumId = forumId;
     }
 
     public void setId(long id) {

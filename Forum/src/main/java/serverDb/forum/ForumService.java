@@ -39,11 +39,11 @@ public class ForumService {
         try {
 
 //          **************************************find user**************************************
-            ResponseEntity responseEntity = findUser(forum.getUser(), jdbcTemplate);
-            if (responseEntity.getStatusCode() != HttpStatus.OK) {
-                return responseEntity;
+            User user = findUser(forum.getUser(), jdbcTemplate);
+            if (user == null) {
+                return new ResponseEntity(Error.getJson("Can't find user with nickname: " + forum.getUser()),
+                        HttpStatus.NOT_FOUND);
             }
-            User user = (User) responseEntity.getBody();
 //          **************************************find user**************************************
 
             forum.setUser(user.getNickname());
@@ -55,7 +55,7 @@ public class ForumService {
 
         } catch (DuplicateKeyException e) {
 
-            Forum duplicateForum = (Forum) findForum(forum.getSlug(), jdbcTemplate).getBody();
+            Forum duplicateForum = findForum(forum.getSlug(), jdbcTemplate);
 
             return new ResponseEntity(duplicateForum, HttpStatus.CONFLICT);
 
@@ -69,21 +69,21 @@ public class ForumService {
     public ResponseEntity createThread(String forum_slug, Thread thread) {
 
 //      **************************************find user**************************************
-        ResponseEntity responseEntity = findUser(thread.getAuthor(), jdbcTemplate);
-        if (responseEntity.getStatusCode() != HttpStatus.OK) {
-            return responseEntity;
+        User user = findUser(thread.getAuthor(), jdbcTemplate);
+        if (user == null) {
+            return new ResponseEntity(Error.getJson("Can't find user with nickname: " + thread.getAuthor()),
+                    HttpStatus.NOT_FOUND);
         }
-        User user = (User) responseEntity.getBody();
 //      **************************************find user**************************************
 
         thread.setAuthor(user.getNickname());
 
 //      **************************************find forum**************************************
-        responseEntity = findForum(forum_slug, jdbcTemplate);
-        if (responseEntity.getStatusCode() != HttpStatus.OK) {
-            return responseEntity;
+        Forum forum = findForum(forum_slug, jdbcTemplate);
+        if (forum == null) {
+            return new ResponseEntity(Error.getJson("Can't find forum: " + forum_slug),
+                    HttpStatus.NOT_FOUND);
         }
-        Forum forum = (Forum) responseEntity.getBody();
 //      **************************************find forum**************************************
 
         int id = (int) jdbcTemplate.queryForObject("SELECT nextval('thread_id_seq')", Integer.class);
@@ -93,7 +93,7 @@ public class ForumService {
                     thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug(), id, user.getId(), forum.getId()});
         } catch (DuplicateKeyException e) {
 
-            Thread duplicateThread = (Thread) findThread(thread.getSlug(), -1, jdbcTemplate).getBody();
+            Thread duplicateThread = findThread(thread.getSlug(), -1, jdbcTemplate);
 
             return new ResponseEntity(duplicateThread, HttpStatus.CONFLICT);
 
@@ -101,8 +101,8 @@ public class ForumService {
         thread.setId(id);
         thread.setForum(forum.getSlug());
 //      UPDATE COUNT OF THREADS
-        String sqlUpdate = "UPDATE Forum SET threads = threads + 1 WHERE slug = ?";
-        jdbcTemplate.update(sqlUpdate, forum.getSlug());
+        String sqlUpdate = "UPDATE Forum SET threads = threads + 1 WHERE id = ?";
+        jdbcTemplate.update(sqlUpdate, forum.getId());
 
         return new ResponseEntity(thread, HttpStatus.CREATED);
 
@@ -112,24 +112,25 @@ public class ForumService {
 
     public ResponseEntity getForum(String slug) {
 
-        ResponseEntity responseEntity = findForum(slug, jdbcTemplate);
-        if (responseEntity.getStatusCode() != HttpStatus.OK) {
-            return responseEntity;
+        Forum forum = findForum(slug, jdbcTemplate);
+        if (forum == null) {
+            return new ResponseEntity(Error.getJson("Can't find forum: " + slug),
+                    HttpStatus.NOT_FOUND);
         }
 
-        return  responseEntity;
+        return new ResponseEntity(forum, HttpStatus.OK);
 
     }
 
     public ResponseEntity getThreads(String slug, Integer limit, String since, Boolean desc) throws ParseException {
 
 //      **************************************find forum**************************************
-        ResponseEntity responseEntity = findForum(slug, jdbcTemplate);
-        if (responseEntity.getStatusCode() != HttpStatus.OK) {
-            return responseEntity;
+        Forum forum = findForum(slug, jdbcTemplate);
+        if (forum == null) {
+            return new ResponseEntity(Error.getJson("Can't find forum: " + slug),
+                    HttpStatus.NOT_FOUND);
         }
 //      **************************************find forum**************************************
-        Forum forum = (Forum) responseEntity.getBody();
 
         final StringBuilder sql = new StringBuilder("SELECT * from Thread WHERE forumId = ?");
         final List<Object> args = new ArrayList<>();
@@ -161,12 +162,11 @@ public class ForumService {
     public ResponseEntity getUsers(String slug, Integer limit, String since, Boolean desc) {
 
 //      **************************************find forum**************************************
-
-        ResponseEntity responseEntity = findForum(slug, jdbcTemplate);
-        if (responseEntity.getStatusCode() != HttpStatus.OK) {
-            return responseEntity;
+        Forum forum = findForum(slug, jdbcTemplate);
+        if (forum == null) {
+            return new ResponseEntity(Error.getJson("Can't find forum: " + slug),
+                    HttpStatus.NOT_FOUND);
         }
-        Forum forum = (Forum) responseEntity.getBody();
 //      **************************************find forum**************************************
         int id = forum.getId();
 
@@ -175,7 +175,7 @@ public class ForumService {
                 " FROM FUser u1 JOIN Thread on(userId = u1.id) WHERE forumId = ?" +
                 " UNION " +
                 " SELECT u2.* " +
-                " FROM FUser u2 JOIN Post on(Post.author = u2.nickname) WHERE Post.forumId = ?) as f  ");
+                " FROM FUser u2 JOIN Post on(userId = u2.id) WHERE forumId = ?) as f  ");
         final List<Object> args = new ArrayList<>();
         args.add(id);
         args.add(id);
@@ -207,7 +207,7 @@ public class ForumService {
         return new ResponseEntity(users, HttpStatus.OK);
     }
 
-    public static ResponseEntity findForum(String slug, JdbcTemplate jdbcTemplate) {
+    public static Forum findForum(String slug, JdbcTemplate jdbcTemplate) {
 
         try {
 
@@ -215,12 +215,11 @@ public class ForumService {
             Forum forum = jdbcTemplate.queryForObject(
                     sql, new Object[] { slug }, new ForumRowMapper());
 
-            return new ResponseEntity(forum, HttpStatus.OK);
+            return forum;
 
-        } catch (EmptyResultDataAccessException e) {
+        } catch (Exception e) {
 
-            return new ResponseEntity(Error.getJson("Can't find forum: " + slug),
-                    HttpStatus.NOT_FOUND);
+            return null;
 
         }
 

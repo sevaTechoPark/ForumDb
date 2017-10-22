@@ -46,11 +46,11 @@ public class UserService{
         try {
 
 //          **************************************find user**************************************
-            ResponseEntity responseEntity = findUser(user.getNickname(), jdbcTemplate);
-            if (responseEntity.getStatusCode() != HttpStatus.OK) {
-                return responseEntity;
+            User oldUser = findUser(user.getNickname(), jdbcTemplate);
+            if (oldUser == null) {
+                return new ResponseEntity(Error.getJson("Can't find user with nickname: " + user.getNickname()),
+                        HttpStatus.NOT_FOUND);
             }
-            User oldUser = (User) responseEntity.getBody();
 //          **************************************find user**************************************
 
             if (user.getEmail() == null) {
@@ -77,28 +77,27 @@ public class UserService{
 
     public ResponseEntity getUser(String nickname) {
 
-        ResponseEntity responseEntity = findUser(nickname, jdbcTemplate);
-        if (responseEntity.getStatusCode() != HttpStatus.OK) {
-            return responseEntity;
+        User user = findUser(nickname, jdbcTemplate);
+        if (user == null) {
+            return new ResponseEntity(Error.getJson("Can't find user with nickname: " + nickname),
+                    HttpStatus.NOT_FOUND);
         }
 
-        return  responseEntity;
+        return new ResponseEntity(user, HttpStatus.OK);
     }
 
-    public static ResponseEntity findUser(String nickname, JdbcTemplate jdbcTemplate) {
+    public static User findUser(String nickname, JdbcTemplate jdbcTemplate) {
 
         try {
 
             final String sql = "SELECT * from FUser WHERE  nickname::citext =  ?::citext";
             User user = jdbcTemplate.queryForObject(
                     sql, new Object[]{ nickname }, new UserRowMapper());
+            return user;
 
-            return new ResponseEntity(user, HttpStatus.OK);
+        } catch (Exception e) {
 
-        } catch (EmptyResultDataAccessException e) {
-
-            return new ResponseEntity(Error.getJson("Can't find user with nickname: " + nickname),
-                    HttpStatus.NOT_FOUND);
+            return null;
         }
     }
 }

@@ -87,8 +87,8 @@ public class PostService {
 
             if (Arrays.asList(related).contains("user")) {
 
-                sql = "SELECT * from FUser WHERE nickname = ?";
-                User user = jdbcTemplate.queryForObject(sql, new Object[] { post.getAuthor() },
+                sql = "SELECT * from FUser WHERE id = ?";
+                User user = jdbcTemplate.queryForObject(sql, new Object[] { post.getUserId() },
                         new UserRowMapper());
 
                 responseBody.set("author", user.getJson());
@@ -97,8 +97,8 @@ public class PostService {
 
             if (Arrays.asList(related).contains("forum")) {
 
-                sql = "SELECT * from Forum WHERE slug = ?";
-                Forum forum = jdbcTemplate.queryForObject(sql, new Object[] { post.getForum() },
+                sql = "SELECT * from Forum WHERE id = ?";
+                Forum forum = jdbcTemplate.queryForObject(sql, new Object[] { post.getForumId() },
                         new ForumRowMapper());
 
                 responseBody.set("forum", forum.getJson());
