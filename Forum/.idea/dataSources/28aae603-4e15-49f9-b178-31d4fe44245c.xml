@@ -18,8 +18,8 @@
     </database>
     <schema id="6" parent="2" name="public">
       <ObjectId>2200</ObjectId>
-      <IntrospectionTimestamp>2017-10-23.11:19:57.658</IntrospectionTimestamp>
-      <IntrospectionStateNumber>2993850</IntrospectionStateNumber>
+      <IntrospectionTimestamp>2017-10-23.12:23:10.301</IntrospectionTimestamp>
+      <IntrospectionStateNumber>3050678</IntrospectionStateNumber>
       <Current>1</Current>
       <Visible>1</Visible>
     </schema>
@@ -170,7 +170,7 @@
     </routine>
     <routine id="31" parent="6" name="insert_forumusers">
       <ObjectId>49391</ObjectId>
-      <StateNumber>2993850</StateNumber>
+      <StateNumber>3050678</StateNumber>
       <VolatilityKind>volatile</VolatilityKind>
       <ResultsDefinition>trigger</ResultsDefinition>
       <LanguageName>plpgsql</LanguageName>
