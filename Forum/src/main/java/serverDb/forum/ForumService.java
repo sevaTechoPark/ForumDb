@@ -104,12 +104,11 @@ public class ForumService {
         String sqlUpdate = "UPDATE Forum SET threads = threads + 1 WHERE id = ?";
         jdbcTemplate.update(sqlUpdate, forum.getId());
 
-        final String sql = "INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) ON CONFLICT DO NOTHING";
+        final String sql = "INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) " +
+                "ON CONFLICT DO NOTHING";
         jdbcTemplate.update(sql, new Object[] {user.getId(), forum.getId()});
 
         return new ResponseEntity(thread, HttpStatus.CREATED);
-
-
 
     }
 
@@ -173,17 +172,11 @@ public class ForumService {
 //      **************************************find forum**************************************
         int id = forum.getId();
 
-//        final StringBuilder sql = new StringBuilder("SELECT * FROM (" +
-//                " SELECT u1.* " +
-//                " FROM FUser u1 JOIN Thread on(userId = u1.id) WHERE forumId = ?" +
-//                " UNION " +
-//                " SELECT u2.* " +
-//                " FROM FUser u2 JOIN Post on(userId = u2.id) WHERE forumId = ?) as f  ");
-        final StringBuilder sql = new StringBuilder("SELECT DISTINCT nickname, email, fullname, about, FUser.id"
+        final StringBuilder sql = new StringBuilder("SELECT nickname, fullname, about, FUser.id, email"
                 + " FROM ForumUsers JOIN FUser on(FUser.id = ForumUsers.userId) WHERE forumId = ?");
         final List<Object> args = new ArrayList<>();
         args.add(id);
-        //args.add(id);
+
 
         if (since != null) {
             sql.append(" AND nickname::citext");

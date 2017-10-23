@@ -197,8 +197,8 @@ public class ThreadService {
 
         try {   // user has voted
 
-            final String sqlFindVote = "SELECT voice from Vote WHERE userId = ? AND treadId = ?";
-            final int voice = (int) jdbcTemplate.queryForObject(
+            final String sqlFindVote = "SELECT voice from Vote WHERE userId = ? AND threadId = ?";
+            final int voice = jdbcTemplate.queryForObject(
                     sqlFindVote, new Object[]{userId, threadId}, Integer.class);
 
             if (vote.getVoice() == voice) { // his voice doesn't change
@@ -206,7 +206,7 @@ public class ThreadService {
 
             } else {    // voice changed.
 
-                final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE userId = ? AND treadId = ?";
+                final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE userId = ? AND threadId = ?";
                 jdbcTemplate.update(sqlUpdateVote, vote.getVoice(), userId, threadId);
 
                 voiceForUpdate = vote.getVoice() * 2;  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
@@ -215,7 +215,7 @@ public class ThreadService {
 
         } catch (EmptyResultDataAccessException e) {    // user hasn't voted
 
-            final String sqlInsertVote = "INSERT INTO Vote(userId, voice, treadId) VALUES(?,?,?)";
+            final String sqlInsertVote = "INSERT INTO Vote(userId, voice, threadId) VALUES(?,?,?)";
 
             jdbcTemplate.update(sqlInsertVote, new Object[]{userId, vote.getVoice(), threadId});
 
