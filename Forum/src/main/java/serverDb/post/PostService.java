@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 
+import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 import serverDb.forum.Forum;
 import serverDb.forum.ForumRowMapper;
@@ -87,8 +88,8 @@ public class PostService {
 
             if (Arrays.asList(related).contains("user")) {
 
-                sql = "SELECT * from FUser WHERE id = ?";
-                User user = jdbcTemplate.queryForObject(sql, new Object[] { post.getUserId() },
+                sql = "SELECT * from FUser WHERE nickname = ?";
+                User user = jdbcTemplate.queryForObject(sql, new Object[] { post.getAuthor() },
                         new UserRowMapper());
 
                 responseBody.set("author", user.getJson());

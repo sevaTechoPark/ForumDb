@@ -1,5 +1,6 @@
 package serverDb.user;
 
+import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 
 import org.springframework.dao.DuplicateKeyException;

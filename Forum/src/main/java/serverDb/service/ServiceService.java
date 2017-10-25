@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ServiceService {
@@ -20,7 +21,7 @@ public class ServiceService {
 
     public ResponseEntity clearDatabase() {
 
-        final String sql = "TRUNCATE TABLE ForumUsers, Post, Vote, Thread, Forum, FUser";
+        final String sql = "TRUNCATE TABLE PostsThread, ForumUsers, Post, Vote, Thread, Forum, FUser";
         jdbcTemplate.update(sql);
 
         return new ResponseEntity<>(HttpStatus.OK);

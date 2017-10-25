@@ -4,6 +4,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 
+import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 import serverDb.thread.Thread;
 import serverDb.thread.ThreadRowMapper;
@@ -145,7 +146,9 @@ public class ForumService {
             } else {
                 sql.append(" >");
             }
-            sql.append("= '" + since + "' ");
+            //sql.append("= '" + since + "' ");
+            sql.append("= ?::timestamp with time zone");
+            args.add(since);
         }
         sql.append(" ORDER BY created");
         if (desc == Boolean.TRUE) {

@@ -2,6 +2,7 @@ package serverDb.thread;
 
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 import serverDb.forum.Forum;
 import serverDb.post.Post;
@@ -27,9 +28,7 @@ import java.sql.*;
 
 import java.time.ZonedDateTime;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
 
 @Service
@@ -38,8 +37,8 @@ public class ThreadService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Transactional
     public ResponseEntity createPosts(String slug, int id, List<Post> posts) {
-
 //      **************************************find thread**************************************
         Thread thread = findThread(slug, id, jdbcTemplate);
         if (thread == null) {
@@ -58,79 +57,130 @@ public class ThreadService {
         String sql;
         sql = "SELECT id from Post WHERE thread = ? AND parent = 0 LIMIT 1";
 
-        boolean flag;
+        List<String> withoutDublicate = new ArrayList<>();
+
+        boolean flag = Boolean.FALSE;
         try {
             int _id = (int) jdbcTemplate.queryForObject(sql,new Object[] { threadId }, Integer.class);
             flag = Boolean.TRUE;
         } catch (EmptyResultDataAccessException e) {
-            flag = Boolean.FALSE;
-        }
-
-        if(flag == Boolean.FALSE) { // may be in current posts will be parent post
+            //
+        } finally {
+            // may be in current posts will be parent post
             ListIterator<Post> listIter = posts.listIterator();
 
             while(listIter.hasNext()){
-
-                if (listIter.next().getParent() == 0) {
+                Post post = listIter.next();
+                if (post.getParent() == 0) {
                     flag = true;
-                    break;
+                    //break;
+                }
+
+                String prevAuthor = post.getAuthor();
+                if (!withoutDublicate.contains(prevAuthor)) {
+                    withoutDublicate.add(prevAuthor);
                 }
             }
-        }
 
-        if (flag == Boolean.FALSE) {    // no parent message
-            return new ResponseEntity(Error.getJson("Missed parent post!"),
-                    HttpStatus.CONFLICT);
+            if (flag == Boolean.FALSE) {    // no parent message
+                return new ResponseEntity(Error.getJson("Missed parent post!"),
+                        HttpStatus.CONFLICT);
+            }
+
         }
 
         Timestamp created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
-        try {
-        final List<Long> ids = jdbcTemplate.query("SELECT nextval('post_id_seq') FROM generate_series(1, ?)", new Object[]{posts.size()}, (rs, rowNum) -> rs.getLong(1));
-        sql = "INSERT INTO Post(author, message, parent, thread, forum, created, id, path, forumId, userId) VALUES(?,?,?,?,?,?,?," +
-                " (SELECT path FROM Post WHERE id = ?) || ?, ?, (SELECT id FROM FUser WHERE nickname = ?))";
-        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+        final List<Integer> ids = jdbcTemplate.query("SELECT nextval('post_id_seq') FROM generate_series(1, ?)", new Object[]{posts.size()}, (rs, rowNum) -> rs.getInt(1));
+        sql = "INSERT INTO Post(author, message, parent, thread, forum, forumId, created, id, path) VALUES(?,?,?,?,?,?,?,?," +
+                " (SELECT path FROM Post WHERE id = ?) || ?)";
 
-                @Override
-                public void setValues(PreparedStatement ps, int i) throws SQLException {
+        try(Connection connection = jdbcTemplate.getDataSource().getConnection()) {
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
+            for (int i = 0; i < posts.size(); i++) {
+                Post post = posts.get(i);
+                id = ids.get(i);
 
-                    Post post = posts.get(i);
-
-                    ps.setString(1, post.getAuthor());
-                    ps.setString(2, post.getMessage());
-                    ps.setLong(3, post.getParent());
-                    ps.setInt(4, threadId);
-                    ps.setString(5, forumSlug);
-                    ps.setTimestamp(6, created);
-                    ps.setLong(7, ids.get(i));
-                    if (post.getParent() != 0) {
-                        ps.setLong(8, post.getParent());
-                    } else {
-                        ps.setLong(8, ids.get(i));
-                    }
-                    ps.setLong(9, ids.get(i));
-                    ps.setLong(10, forumId);
-                    ps.setString(11, post.getAuthor());
-
-
-                    post.setForum(forumSlug);
-                    post.setCreated(created);
-                    post.setThread(threadId);
-                    post.setId(ids.get(i));
-
+                ps.setString(1, post.getAuthor());
+                ps.setString(2, post.getMessage());
+                ps.setInt(3, post.getParent());
+                ps.setInt(4, threadId);
+                ps.setString(5, forumSlug);
+                ps.setInt(6, forumId);
+                ps.setTimestamp(7, created);
+                ps.setInt(8, id);
+                if (post.getParent() != 0) {
+                    ps.setLong(9, post.getParent());
+                } else {
+                    ps.setLong(9, id);
                 }
+                ps.setInt(10, id);
 
-                @Override
-                public int getBatchSize() {
-                    return posts.size();
-                }
-            });
-        } catch (DataIntegrityViolationException e) {
+                post.setForum(forumSlug);
+                post.setCreated(created);
+                post.setThread(threadId);
+                post.setId(ids.get(i));
+
+                ps.addBatch();
+            }
+            ps.executeBatch();
+
+        } catch (BatchUpdateException e) {
             return new ResponseEntity(Error.getJson("Can't find post author"), HttpStatus.NOT_FOUND);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
+        try(Connection connection = jdbcTemplate.getDataSource().getConnection()) {
+            sql = "INSERT INTO ForumUsers(userId, forumId) VALUES( (SELECT id FROM FUser WHERE nickname = ?), ?) " +
+                    "ON CONFLICT DO NOTHING";
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
+
+            for (int i = 0; i < withoutDublicate.size(); i++) {
+
+                String author = withoutDublicate.get(i);
+
+                ps.setString(1, author);
+                ps.setInt(2, forumId);
+
+                ps.addBatch();
+            }
+            ps.executeBatch();
+
+        } catch (BatchUpdateException e) {
+            //
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        try(Connection connection = jdbcTemplate.getDataSource().getConnection()) {
+            sql = "INSERT INTO PostsThread(postId, threadId, parent, path) VALUES(?,?,?, (SELECT path FROM Post WHERE id = ?)) " +
+                    "ON CONFLICT DO NOTHING";
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
+
+            for (int i = 0; i < posts.size(); i++) {
+
+                Post post = posts.get(i);
+                id = ids.get(i);
+
+                ps.setInt(1, id);
+                ps.setInt(2, post.getThread());
+                ps.setInt(3, post.getParent());
+                ps.setInt(4, id);
+
+                ps.addBatch();
+            }
+            ps.executeBatch();
+
+        } catch (BatchUpdateException e) {
+            //
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 //          UPDATE COUNT OF POST
         String sqlUpdate = "UPDATE Forum SET posts = posts + ? WHERE id = ?";
         jdbcTemplate.update(sqlUpdate, posts.size(), thread.getForumId());
+
+
 
         return new ResponseEntity(posts, HttpStatus.CREATED);
     }
@@ -264,23 +314,23 @@ public class ThreadService {
 
         if (since != null) {
 
-            if (sort != null && sort.equals("tree")) {
+            if (sort.equals("tree")) {
                 sql.append(" AND path");
-            } else if (sort != null && sort.equals("parent_tree")) {
+            } else if (sort.equals("parent_tree")) {
                 sql.append(" AND path[1]");
             } else {
                 sql.append(" AND id");
             }
         }
 
-        if (limit != null && sort != null && sort.equals("parent_tree")) {
+        if (limit != null && sort.equals("parent_tree")) {
             if (since == null) {
                 sql.append(" AND path[1]");
             }
-            sql.append(" IN (SELECT id FROM Post WHERE thread = ? AND parent = 0");
+            sql.append(" IN (SELECT postId as id FROM PostsThread WHERE threadId = ? AND parent = 0");
             args.add(threadId);
             if (since != null) {
-                sql.append(" AND path[1] ");
+                sql.append(" AND path[1]");
             }
         }
 
@@ -288,10 +338,10 @@ public class ThreadService {
 
             sql.append(moreOrLess);
 
-            if (sort != null && sort.equals("tree")) {
-                sql.append(" (SELECT path FROM Post where id = ?)");
-            } else if(sort != null && sort.equals("parent_tree")) {
-                sql.append(" (SELECT path[1] FROM Post where id = ?)");
+            if (sort.equals("tree")) {
+                sql.append(" (SELECT path FROM PostsThread where postId = ?)");
+            } else if(sort.equals("parent_tree")) {
+                sql.append(" (SELECT path[1] FROM PostsThread where postId = ?)");
             } else {
                 sql.append(" ?");
             }
@@ -300,7 +350,7 @@ public class ThreadService {
         }
 
 
-        if (sort != null) {
+        if (!sort.equals(" ")) {
 
             if (sort.equals("flat")) {
                 sql.append(" ORDER BY created " + descOrAsc + " , id");
@@ -328,7 +378,7 @@ public class ThreadService {
         sql.append(descOrAsc);
 
         if (limit != null) {
-            if (sort != null && sort.equals("parent_tree")) {
+            if (sort.equals("parent_tree")) {
                 // NO LIMIT HERE
             } else {
                 sql.append(" LIMIT ?");

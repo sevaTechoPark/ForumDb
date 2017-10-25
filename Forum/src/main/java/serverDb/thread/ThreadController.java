@@ -94,6 +94,10 @@ public class ThreadController {
             desc = Boolean.FALSE;
         }
 
+        if (sort == null) {
+            sort = " ";
+        }
+
         return threadService.getPosts(slug_or_id, id, limit, since, sort, desc);
     }
 

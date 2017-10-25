@@ -13,20 +13,19 @@ import java.time.ZonedDateTime;
 
 public class Post {
 
-    private long id;
+    private int id;
     private String forum;
     private String author;
     private int thread;
     private Timestamp created;
     private boolean isEdited;
     private String message;
-    private long parent;
-    private long userId;
-    private long forumId;
+    private int parent;
+    private int forumId;
 
     @JsonCreator
     public Post(@JsonProperty("author") String author, @JsonProperty("message") String message,
-                @JsonProperty("parent") long parent) {
+                @JsonProperty("parent") int parent) {
 
         this.author = author;
         this.message = message;
@@ -38,15 +37,12 @@ public class Post {
 
     }
 
-    public long getUserId() {
-        return userId;
-    }
 
-    public long getForumId() {
+    public int getForumId() {
         return forumId;
     }
 
-    public long getId() {
+    public int getId() {
         return id;
     }
 
@@ -71,7 +67,7 @@ public class Post {
         return message;
     }
 
-    public long getParent() {
+    public int getParent() {
         return parent;
     }
 
@@ -79,15 +75,11 @@ public class Post {
         return thread;
     }
 
-    public void setUserId(long userId) {
-        this.userId = userId;
-    }
-
-    public void setForumId(long forumId) {
+    public void setForumId(int forumId) {
         this.forumId = forumId;
     }
 
-    public void setId(long id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -111,7 +103,7 @@ public class Post {
         this.message = message;
     }
 
-    public void setParent(long parent) {
+    public void setParent(int parent) {
         this.parent = parent;
     }
 
