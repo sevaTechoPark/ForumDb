@@ -55,9 +55,10 @@ public class ThreadService {
         int forumId = thread.getForumId();
 
         String sql;
-        sql = "SELECT id from Post WHERE thread = ? AND parent = 0 LIMIT 1";
+        sql = "SELECT postId from PostsThread WHERE threadId = ? LIMIT 1";
 
         List<String> withoutDublicate = new ArrayList<>();
+        List<Integer> parentPostId = new ArrayList<>();
 
         boolean flag = Boolean.FALSE;
         try {
@@ -67,13 +68,13 @@ public class ThreadService {
             //
         } finally {
             // may be in current posts will be parent post
-            ListIterator<Post> listIter = posts.listIterator();
 
-            while(listIter.hasNext()){
-                Post post = listIter.next();
+            for (int i = 0; i < posts.size(); i++) {
+                Post post = posts.get(i);
+
                 if (post.getParent() == 0) {
+                    parentPostId.add(i);
                     flag = true;
-                    //break;
                 }
 
                 String prevAuthor = post.getAuthor();
@@ -81,6 +82,7 @@ public class ThreadService {
                     withoutDublicate.add(prevAuthor);
                 }
             }
+
 
             if (flag == Boolean.FALSE) {    // no parent message
                 return new ResponseEntity(Error.getJson("Missed parent post!"),
@@ -153,19 +155,16 @@ public class ThreadService {
         }
 
         try(Connection connection = jdbcTemplate.getDataSource().getConnection()) {
-            sql = "INSERT INTO PostsThread(postId, threadId, parent, path) VALUES(?,?,?, (SELECT path FROM Post WHERE id = ?)) " +
-                    "ON CONFLICT DO NOTHING";
+            sql = "INSERT INTO PostsThread(postId, threadId, path1) VALUES(?,?, (SELECT path[1] FROM Post where id = ?))";
             PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
 
-            for (int i = 0; i < posts.size(); i++) {
+            for (int i = 0; i < parentPostId.size(); i++) {
 
-                Post post = posts.get(i);
-                id = ids.get(i);
+                id = ids.get(parentPostId.get(i));
 
                 ps.setInt(1, id);
-                ps.setInt(2, post.getThread());
-                ps.setInt(3, post.getParent());
-                ps.setInt(4, id);
+                ps.setInt(2, threadId);
+                ps.setInt(3, id);
 
                 ps.addBatch();
             }
@@ -306,61 +305,81 @@ public class ThreadService {
         String descOrAsc = desc ? " DESC" : " ASC";
         String moreOrLess = desc ? " <" : " >";
 
-
-        final StringBuilder sql = new StringBuilder("SELECT * from Post WHERE thread = ?");
+        // START
+        final StringBuilder sql = new StringBuilder();
         final List<Object> args = new ArrayList<>();
 
-        args.add(threadId);
+        switch (sort) {
+            case "flat":
+                sql.append("SELECT * from Post WHERE thread = ?");
+                args.add(threadId);
 
-        if (since != null) {
+                if (since != null) {
+                    sql.append(" AND id");
 
-            if (sort.equals("tree")) {
-                sql.append(" AND path");
-            } else if (sort.equals("parent_tree")) {
-                sql.append(" AND path[1]");
-            } else {
-                sql.append(" AND id");
-            }
-        }
+                    sql.append(moreOrLess);
 
-        if (limit != null && sort.equals("parent_tree")) {
-            if (since == null) {
-                sql.append(" AND path[1]");
-            }
-            sql.append(" IN (SELECT postId as id FROM PostsThread WHERE threadId = ? AND parent = 0");
-            args.add(threadId);
-            if (since != null) {
-                sql.append(" AND path[1]");
-            }
-        }
+                    sql.append(" ?");
 
-        if (since != null) {
+                    args.add(since);
+                }
 
-            sql.append(moreOrLess);
-
-            if (sort.equals("tree")) {
-                sql.append(" (SELECT path FROM PostsThread where postId = ?)");
-            } else if(sort.equals("parent_tree")) {
-                sql.append(" (SELECT path[1] FROM PostsThread where postId = ?)");
-            } else {
-                sql.append(" ?");
-            }
-
-            args.add(since);
-        }
-
-
-        if (!sort.equals(" ")) {
-
-            if (sort.equals("flat")) {
                 sql.append(" ORDER BY created " + descOrAsc + " , id");
-            }
 
-            if (sort.equals("tree")) {
+                sql.append(descOrAsc);
+
+                if (limit != null) {
+                    sql.append(" LIMIT ?");
+                    args.add(limit.intValue());
+                }
+                break;
+            case "tree":
+                sql.append("SELECT * from Post WHERE thread = ?");
+                args.add(threadId);
+
+                if (since != null) {
+                    sql.append(" AND path");
+                    sql.append(moreOrLess);
+
+                    sql.append(" (SELECT path FROM Post where id = ?)");
+                    args.add(since);
+
+                }
+
                 sql.append(" ORDER BY path");
-            }
 
-            if (sort.equals("parent_tree")) {
+                sql.append(descOrAsc);
+
+                if (limit != null) {
+                    sql.append(" LIMIT ?");
+                    args.add(limit.intValue());
+                }
+                break;
+            case "parent_tree":
+                sql.append("SELECT * from Post WHERE thread = ?");
+                args.add(threadId);
+                if (since != null) {
+                    sql.append(" AND path[1]");
+                }
+
+                if (limit != null) {
+                    if (since == null) {
+                        sql.append(" AND path[1]");
+                    }
+                    sql.append(" IN (SELECT postId as id FROM PostsThread WHERE threadId = ?");
+                    args.add(threadId);
+                    if (since != null) {
+                        sql.append(" AND path1");
+                    }
+                }
+
+                if (since != null) {
+                    sql.append(moreOrLess);
+
+                    sql.append(" (SELECT path[1] FROM Post where id = ?)");
+
+                    args.add(since);
+                }
 
                 if (limit != null) {
                     sql.append(" order by id " + descOrAsc +" LIMIT ?)");
@@ -368,23 +387,112 @@ public class ThreadService {
                 }
 
                 sql.append(" ORDER BY path");
-            }
 
-        } else {
-            sql.append(" ORDER BY id");
+                sql.append(descOrAsc);
+                break;
+            default:
+                sql.append("SELECT * from Post WHERE thread = ?");
+                args.add(threadId);
+                if (since != null) {
+                    sql.append(" AND id");
+
+                    sql.append(moreOrLess);
+
+                    sql.append(" ?");
+
+                    args.add(since);
+                }
+
+                sql.append(" ORDER BY id");
+
+                sql.append(descOrAsc);
+
+                if (limit != null) {
+                    sql.append(" LIMIT ?");
+                    args.add(limit.intValue());
+                }
+
         }
+        // END
 
-
-        sql.append(descOrAsc);
-
-        if (limit != null) {
-            if (sort.equals("parent_tree")) {
-                // NO LIMIT HERE
-            } else {
-                sql.append(" LIMIT ?");
-                args.add(limit.intValue());
-            }
-        }
+//        final StringBuilder sql = new StringBuilder("SELECT * from Post WHERE thread = ?");
+//        final List<Object> args = new ArrayList<>();
+//
+//        args.add(threadId);
+//
+//        if (since != null) {
+//
+//            if (sort.equals("tree")) {
+//                sql.append(" AND path");
+//            } else if (sort.equals("parent_tree")) {
+//                sql.append(" AND path[1]");
+//            } else {
+//                sql.append(" AND id");
+//            }
+//        }
+//
+//        if (limit != null && sort.equals("parent_tree")) {
+//            if (since == null) {
+//                sql.append(" AND path[1]");
+//            }
+//            sql.append(" IN (SELECT postId as id FROM PostsThread WHERE threadId = ? AND parent = 0");
+//            args.add(threadId);
+//            if (since != null) {
+//                sql.append(" AND path[1]");
+//            }
+//        }
+//
+//        if (since != null) {
+//
+//            sql.append(moreOrLess);
+//
+//            if (sort.equals("tree")) {
+//                sql.append(" (SELECT path FROM PostsThread where postId = ?)");
+//            } else if(sort.equals("parent_tree")) {
+//                sql.append(" (SELECT path[1] FROM PostsThread where postId = ?)");
+//            } else {
+//                sql.append(" ?");
+//            }
+//
+//            args.add(since);
+//        }
+//
+//
+//        if (!sort.equals(" ")) {
+//
+//            if (sort.equals("flat")) {
+//                sql.append(" ORDER BY created " + descOrAsc + " , id");
+//            }
+//
+//            if (sort.equals("tree")) {
+//                sql.append(" ORDER BY path");
+//            }
+//
+//            if (sort.equals("parent_tree")) {
+//
+//                if (limit != null) {
+//                    sql.append(" order by id " + descOrAsc +" LIMIT ?)");
+//                    args.add(limit.intValue());
+//                }
+//
+//                sql.append(" ORDER BY path");
+//            }
+//
+//        } else {
+//            sql.append(" ORDER BY id");
+//        }
+//
+//
+//        sql.append(descOrAsc);
+//
+//        if (limit != null) {
+//            if (sort.equals("parent_tree")) {
+//                // NO LIMIT HERE
+//            } else {
+//                sql.append(" LIMIT ?");
+//                args.add(limit.intValue());
+//            }
+//        }
 
         List<Post> posts = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), new PostRowMapper());
 

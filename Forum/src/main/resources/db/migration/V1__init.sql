@@ -9,7 +9,7 @@ CREATE TABLE FUser(
   about text
 );
 
-CREATE INDEX nickname ON FUser(LOWER(nickname COLLATE "ucs_basic"));
+-- CREATE INDEX nickname ON FUser(LOWER(nickname COLLATE "ucs_basic"));
 
 CREATE TABLE Forum(
   id SERIAL4 PRIMARY KEY,
@@ -22,8 +22,8 @@ CREATE TABLE Forum(
   FOREIGN KEY (userId) REFERENCES FUser(id)
 );
 
-CREATE INDEX forum_slug ON Forum(LOWER(slug COLLATE "ucs_basic"));
-CREATE INDEX forum_user ON Forum("user");
+-- CREATE INDEX forum_slug ON Forum(LOWER(slug COLLATE "ucs_basic"));
+-- CREATE INDEX forum_user ON Forum("user");
 
 CREATE TABLE Thread(
   id SERIAL4 PRIMARY KEY,
@@ -41,9 +41,9 @@ CREATE TABLE Thread(
 
 );
 
-CREATE INDEX thread_slug ON Thread(LOWER(slug COLLATE "ucs_basic"));
+-- CREATE INDEX thread_slug ON Thread(LOWER(slug COLLATE "ucs_basic"));
 CREATE INDEX thread_forum ON Thread(forumId);
-CREATE INDEX thread_author ON Thread(userId);
+-- CREATE INDEX thread_author ON Thread(userId);
 
 
 CREATE TABLE Post(
@@ -63,26 +63,24 @@ CREATE TABLE Post(
 );
 
 -- after pg_stat_statements
-CREATE INDEX post_thread_created_id ON Post(thread, created);
-CREATE INDEX post_thread_created_id_desc ON Post(thread, created DESC);
+CREATE INDEX post_thread_created_id ON Post(thread, created, id );
+CREATE INDEX post_thread_created_id_desc ON Post(thread, created DESC, id DESC);
 
 CREATE INDEX post_thread_parent ON Post(thread, parent);
 CREATE INDEX post_thread_path ON Post(thread, (path[1]));
 
-CREATE INDEX post_id ON Post(id);
+-- CREATE INDEX post_id ON Post(id);
 CREATE INDEX post_thread_path_desc ON Post(thread, path DESC);
 --
 
-CREATE INDEX post_forumId ON Post(forumId);
-CREATE INDEX post_thread ON Post(thread);
+-- CREATE INDEX post_forumId ON Post(forumId);
+-- CREATE INDEX post_thread ON Post(thread);
 
 
 CREATE TABLE Vote(
   id SERIAL4 PRIMARY KEY,
   userId int4,
   threadId int4,
-  FOREIGN KEY (userId) REFERENCES FUser(id),
-  FOREIGN KEY (threadId) REFERENCES Thread(id),
   voice INT2 DEFAULT 0
 );
 
@@ -98,9 +96,8 @@ CREATE TABLE ForumUsers(
 CREATE TABLE PostsThread(
   postId int4 PRIMARY KEY,
   threadId int4,
-  parent int4,
-  path int4[]
+  path1 int4
 );
 
-CREATE INDEX PostsThread_thread_parent ON PostsThread(threadId, parent);
-CREATE INDEX PostsThread_thread_path ON PostsThread(threadId, (path[1]));
+CREATE INDEX postsThread_thread_parent ON PostsThread(threadId, postId, path1);
+CREATE INDEX postsThread_id_thread ON PostsThread(postId, threadId);
