@@ -155,7 +155,7 @@ public class ThreadService {
         }
 
         try(Connection connection = jdbcTemplate.getDataSource().getConnection()) {
-            sql = "INSERT INTO PostsThread(postId, threadId, path1) VALUES(?,?, (SELECT path[1] FROM Post where id = ?))";
+            sql = "INSERT INTO PostsThread(postId, threadId) VALUES(?,?)";
             PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
 
             for (int i = 0; i < parentPostId.size(); i++) {
@@ -164,7 +164,6 @@ public class ThreadService {
 
                 ps.setInt(1, id);
                 ps.setInt(2, threadId);
-                ps.setInt(3, id);
 
                 ps.addBatch();
             }
@@ -369,7 +368,7 @@ public class ThreadService {
                     sql.append(" IN (SELECT postId as id FROM PostsThread WHERE threadId = ?");
                     args.add(threadId);
                     if (since != null) {
-                        sql.append(" AND path1");
+                        sql.append(" AND postId");
                     }
                 }
 

@@ -95,9 +95,8 @@ CREATE TABLE ForumUsers(
 
 CREATE TABLE PostsThread(
   postId int4 PRIMARY KEY,
-  threadId int4,
-  path1 int4
+  threadId int4
 );
 
-CREATE INDEX postsThread_thread_parent ON PostsThread(threadId, postId, path1);
-CREATE INDEX postsThread_id_thread ON PostsThread(postId, threadId);
+CREATE INDEX postsThread_thread_parent ON PostsThread(threadId, postId);
+CREATE INDEX postsThread_parent_thread ON PostsThread(postId, threadId);
