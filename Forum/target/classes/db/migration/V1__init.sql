@@ -1,5 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
-CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+-- CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 
 CREATE TABLE FUser(
   id SERIAL4 PRIMARY KEY,
@@ -63,19 +63,25 @@ CREATE INDEX post_thread_id_path1 ON Post(id, (path[1]));
 CREATE TABLE Vote(
   userId int4,
   threadId int4,
-  voice INT2 DEFAULT 0
+  voice INT2 DEFAULT 0,
+  FOREIGN KEY (userId) REFERENCES FUser(id),
+  FOREIGN KEY (threadId) REFERENCES Thread(id)
 );
 
 
 CREATE TABLE ForumUsers(
   userId int4,
   forumId int4,
-  CONSTRAINT c_userId_forumId UNIQUE (userId, forumId)
+  CONSTRAINT c_userId_forumId UNIQUE (userId, forumId),
+  FOREIGN KEY (userId) REFERENCES FUser(id),
+  FOREIGN KEY (forumId) REFERENCES Forum(id)
 );
 
 CREATE TABLE PostsThread(
   postId int4,
-  threadId int4
+  threadId int4,
+  FOREIGN KEY (postId) REFERENCES Post(id),
+  FOREIGN KEY (threadId) REFERENCES Thread(id)
 );
 
 CREATE INDEX postsThread_thread_parent ON PostsThread(threadId, postId);
