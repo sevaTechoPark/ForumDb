@@ -96,8 +96,9 @@ public class ThreadService {
         sql = "INSERT INTO Post(author, message, parent, thread, forum, forumId, created, id, path) VALUES(?,?,?,?,?,?,?,?," +
                 " (SELECT path FROM Post WHERE id = ?) || ?)";
 
-        try(Connection connection = jdbcTemplate.getDataSource().getConnection()) {
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
+        try(Connection connection = jdbcTemplate.getDataSource().getConnection();
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
+
             for (int i = 0; i < posts.size(); i++) {
                 Post post = posts.get(i);
                 id = ids.get(i);
@@ -132,10 +133,10 @@ public class ThreadService {
             e.printStackTrace();
         }
 
-        try(Connection connection = jdbcTemplate.getDataSource().getConnection()) {
-            sql = "INSERT INTO ForumUsers(userId, forumId) VALUES( (SELECT id FROM FUser WHERE nickname = ?), ?) " +
-                    "ON CONFLICT DO NOTHING";
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
+        sql = "INSERT INTO ForumUsers(userId, forumId) VALUES( (SELECT id FROM FUser WHERE nickname = ?), ?) " +
+                "ON CONFLICT DO NOTHING";
+        try(Connection connection = jdbcTemplate.getDataSource().getConnection();
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
 
             for (int i = 0; i < withoutDublicate.size(); i++) {
 
@@ -154,9 +155,9 @@ public class ThreadService {
             e.printStackTrace();
         }
 
-        try(Connection connection = jdbcTemplate.getDataSource().getConnection()) {
-            sql = "INSERT INTO PostsThread(postId, threadId) VALUES(?,?)";
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS);
+        sql = "INSERT INTO PostsThread(postId, threadId) VALUES(?,?)";
+        try(Connection connection = jdbcTemplate.getDataSource().getConnection();
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
 
             for (int i = 0; i < parentPostId.size(); i++) {
 
@@ -174,6 +175,7 @@ public class ThreadService {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
 //          UPDATE COUNT OF POST
         String sqlUpdate = "UPDATE Forum SET posts = posts + ? WHERE id = ?";
         jdbcTemplate.update(sqlUpdate, posts.size(), thread.getForumId());
@@ -304,7 +306,6 @@ public class ThreadService {
         String descOrAsc = desc ? " DESC" : " ASC";
         String moreOrLess = desc ? " <" : " >";
 
-        // START
         final StringBuilder sql = new StringBuilder();
         final List<Object> args = new ArrayList<>();
 
@@ -323,9 +324,7 @@ public class ThreadService {
                     args.add(since);
                 }
 
-                sql.append(" ORDER BY created " + descOrAsc + " , id");
-
-                sql.append(descOrAsc);
+                sql.append(" ORDER BY created " + descOrAsc + " , id" + descOrAsc);
 
                 if (limit != null) {
                     sql.append(" LIMIT ?");
@@ -412,86 +411,6 @@ public class ThreadService {
                 }
 
         }
-        // END
-
-//        final StringBuilder sql = new StringBuilder("SELECT * from Post WHERE thread = ?");
-//        final List<Object> args = new ArrayList<>();
-//
-//        args.add(threadId);
-//
-//        if (since != null) {
-//
-//            if (sort.equals("tree")) {
-//                sql.append(" AND path");
-//            } else if (sort.equals("parent_tree")) {
-//                sql.append(" AND path[1]");
-//            } else {
-//                sql.append(" AND id");
-//            }
-//        }
-//
-//        if (limit != null && sort.equals("parent_tree")) {
-//            if (since == null) {
-//                sql.append(" AND path[1]");
-//            }
-//            sql.append(" IN (SELECT postId as id FROM PostsThread WHERE threadId = ? AND parent = 0");
-//            args.add(threadId);
-//            if (since != null) {
-//                sql.append(" AND path[1]");
-//            }
-//        }
-//
-//        if (since != null) {
-//
-//            sql.append(moreOrLess);
-//
-//            if (sort.equals("tree")) {
-//                sql.append(" (SELECT path FROM PostsThread where postId = ?)");
-//            } else if(sort.equals("parent_tree")) {
-//                sql.append(" (SELECT path[1] FROM PostsThread where postId = ?)");
-//            } else {
-//                sql.append(" ?");
-//            }
-//
-//            args.add(since);
-//        }
-//
-//
-//        if (!sort.equals(" ")) {
-//
-//            if (sort.equals("flat")) {
-//                sql.append(" ORDER BY created " + descOrAsc + " , id");
-//            }
-//
-//            if (sort.equals("tree")) {
-//                sql.append(" ORDER BY path");
-//            }
-//
-//            if (sort.equals("parent_tree")) {
-//
-//                if (limit != null) {
-//                    sql.append(" order by id " + descOrAsc +" LIMIT ?)");
-//                    args.add(limit.intValue());
-//                }
-//
-//                sql.append(" ORDER BY path");
-//            }
-//
-//        } else {
-//            sql.append(" ORDER BY id");
-//        }
-//
-//
-//        sql.append(descOrAsc);
-//
-//        if (limit != null) {
-//            if (sort.equals("parent_tree")) {
-//                // NO LIMIT HERE
-//            } else {
-//                sql.append(" LIMIT ?");
-//                args.add(limit.intValue());
-//            }
-//        }
 
         List<Post> posts = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), new PostRowMapper());
 
