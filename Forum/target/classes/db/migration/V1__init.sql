@@ -56,8 +56,8 @@ CREATE TABLE Post(
 
 CREATE INDEX post_thread_created_id ON Post(thread, created, id);
 CREATE INDEX post_thread_path1 ON Post(thread, (path[1]));
-CREATE INDEX post_thread_path_desc ON Post(thread, path);
-CREATE INDEX post_thread_id_path1 ON Post(id, (path[1]));
+CREATE INDEX post_thread_path ON Post(thread, path);
+CREATE INDEX post_id_path1 ON Post(id, (path[1]));
 
 CREATE TABLE Vote(
   userId int4,
