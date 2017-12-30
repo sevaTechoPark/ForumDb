@@ -19,7 +19,6 @@ RUN echo "synchronous_commit=off" >> /etc/postgresql/$PGVER/main/postgresql.conf
 RUN echo "shared_buffers = 256MB" >> /etc/postgresql/$PGVER/main/postgresql.conf
 RUN echo "max_wal_size = 1GB" >> /etc/postgresql/$PGVER/main/postgresql.conf
 RUN echo "work_mem = 32MB" >> /etc/postgresql/$PGVER/main/postgresql.conf
-RUN echo "effective_cache_size = 1024MB" >> /etc/postgresql/$PGVER/main/postgresql.conf
 
 EXPOSE 5432
 
@@ -39,5 +38,5 @@ RUN mvn package
 EXPOSE 5000
 
 
-CMD service postgresql start && java -Xmx300M -Xmx300M -jar target/Forum-1.0-SNAPSHOT.jar
+CMD service postgresql start && java -Xmx400M -Xmx400M -jar target/Forum-1.0-SNAPSHOT.jar
 
