@@ -39,12 +39,12 @@ public class ThreadService {
 //      **************************************find thread**************************************
         Thread thread = findThread(slug, id, jdbcTemplate);
         if (thread == null) {
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
-                    HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find thread: " + slug));
+
         }
 //      **************************************find thread**************************************
         if (posts.isEmpty()) {
-            return new ResponseEntity(posts, HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED).body(posts);
         }
 
         int threadId = thread.getId();
@@ -59,7 +59,8 @@ public class ThreadService {
 
         boolean flag = Boolean.FALSE;
         try {
-            int _id = (int) jdbcTemplate.queryForObject(sql,new Object[] { threadId }, Integer.class);
+            // post created in another thread => catch and flag stay in FALSE
+            jdbcTemplate.queryForObject(sql, new Object[]{threadId}, Integer.class);
             flag = Boolean.TRUE;
         } catch (EmptyResultDataAccessException e) {
             //
@@ -82,8 +83,8 @@ public class ThreadService {
 
 
             if (flag == Boolean.FALSE) {    // no parent message
-                return new ResponseEntity(Error.getJson("Missed parent post!"),
-                        HttpStatus.CONFLICT);
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(Error.getJson("Missed parent post!"));
+
             }
 
         }
@@ -125,7 +126,8 @@ public class ThreadService {
             ps.executeBatch();
 
         } catch (BatchUpdateException e) {
-            return new ResponseEntity(Error.getJson("Can't find post author"), HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find post author"));
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -170,16 +172,14 @@ public class ThreadService {
         } catch (BatchUpdateException e) {
             //
         } catch (SQLException e) {
-            e.printStackTrace();
+            //
         }
 
 //          UPDATE COUNT OF POST
         String sqlUpdate = "UPDATE Forum SET posts = posts + ? WHERE id = ?";
         jdbcTemplate.update(sqlUpdate, posts.size(), thread.getForumId());
 
-
-
-        return new ResponseEntity(posts, HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(posts);
     }
 
     public ResponseEntity renameThread(String slug, int id, Thread thread) {
@@ -187,8 +187,7 @@ public class ThreadService {
 //      **************************************find thread**************************************
         Thread threadUpdated = findThread(slug, id, jdbcTemplate);
         if (threadUpdated == null) {
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
-                    HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find thread: " + slug));
         }
 //      **************************************find thread**************************************
         if (thread.getMessage() == null) {
@@ -208,13 +207,15 @@ public class ThreadService {
 
             int rowsAffected = jdbcTemplate.update(sql, thread.getMessage(), thread.getTitle(), threadUpdated.getId());
             if (rowsAffected == 0) {
-                return new ResponseEntity(Error.getJson("Can't find thread: " + slug), HttpStatus.NOT_FOUND);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find thread: " + slug));
             }
 
-            return new ResponseEntity(threadUpdated, HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.OK).body(threadUpdated);
+
         } catch (DataIntegrityViolationException e) {
 
-            return new ResponseEntity(threadUpdated, HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.OK).body(threadUpdated);
+
         }
 
     }
@@ -224,16 +225,16 @@ public class ThreadService {
 //      **************************************find user**************************************
         User user = findUser(vote.getNickname(), jdbcTemplate);
         if (user == null) {
-            return new ResponseEntity(Error.getJson("Can't find user with nickname: " + vote.getNickname()),
-                    HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    Error.getJson("Can't find user with nickname: " + vote.getNickname()));
         }
 //      **************************************find user**************************************
 
 //      **********************************find thread**************************************
         Thread thread = findThread(slug, id, jdbcTemplate);
         if (thread == null) {
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
-                    HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    Error.getJson("Can't find thread: " + slug));
         }
 //      **************************************find thread**************************************
 
@@ -274,19 +275,17 @@ public class ThreadService {
 
         thread.setVotes(thread.getVotes() + voiceForUpdate);
 
-        return new ResponseEntity(thread, HttpStatus.OK);
+        return ResponseEntity.status(HttpStatus.OK).body(thread);
     }
 
     public ResponseEntity getThread(String slug, int id) {
 
         Thread thread = findThread(slug, id, jdbcTemplate);
         if (thread == null) {
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
-                    HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find thread: " + slug));
         }
 
-        return new ResponseEntity(thread, HttpStatus.OK);
-
+        return ResponseEntity.status(HttpStatus.OK).body(thread);
     }
 
     public ResponseEntity getPosts(String slug, int id, Integer limit, Integer since, String sort, Boolean desc) {
@@ -294,8 +293,8 @@ public class ThreadService {
 //      **************************************find thread**************************************
         Thread thread = findThread(slug, id, jdbcTemplate);
         if (thread == null) {
-            return new ResponseEntity(Error.getJson("Can't find thread: " + slug),
-                    HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find thread: " + slug));
+
         }
 //      **************************************find thread**************************************
 
@@ -411,8 +410,7 @@ public class ThreadService {
 
         List<Post> posts = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), PostRowMapper.INSTANCE);
 
-        return new ResponseEntity(posts, HttpStatus.OK);
-
+        return ResponseEntity.status(HttpStatus.OK).body(posts);
     }
 
     public static Thread findThread(String slug, int id, JdbcTemplate jdbcTemplate) {

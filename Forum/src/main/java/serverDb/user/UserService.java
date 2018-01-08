@@ -27,7 +27,7 @@ public class UserService{
             final String sql = "INSERT INTO FUser(nickname, email, fullname, about) VALUES(?,?,?,?)";
             jdbcTemplate.update(sql, new Object[]{ user.getNickname(), user.getEmail(), user.getFullname(), user.getAbout()});
 
-            return new ResponseEntity(user, HttpStatus.CREATED); // 201
+            return ResponseEntity.status(HttpStatus.CREATED).body(user);
 
         } catch (DuplicateKeyException e) {
 
@@ -36,7 +36,7 @@ public class UserService{
 
             List<User> users = jdbcTemplate.query(sql, new Object[] {user.getNickname(), user.getEmail()}, UserRowMapper.INSTANCE);
 
-            return new ResponseEntity(users, HttpStatus.CONFLICT); // 409
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(users);
         }
     }
 
@@ -65,24 +65,24 @@ public class UserService{
             final String sql = "UPDATE FUser SET email = ?, fullname = ?, about = ? WHERE  nickname::citext =  ?::citext";
             jdbcTemplate.update(sql, user.getEmail(), user.getFullname(), user.getAbout(), user.getNickname());
 
-            return new ResponseEntity(user, HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.OK).body(user);
+
 
         } catch (DuplicateKeyException e) {
 
-            return new ResponseEntity(Error.getJson("this email has already existed"), HttpStatus.CONFLICT); // 409
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Error.getJson("this email has already existed"));
 
         }
     }
 
     public ResponseEntity getUser(String nickname) {
-
         User user = findUser(nickname, jdbcTemplate);
         if (user == null) {
-            return new ResponseEntity(Error.getJson("Can't find user with nickname: " + nickname),
-                    HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find user with nickname: " + nickname));
+
         }
 
-        return new ResponseEntity(user, HttpStatus.OK);
+        return ResponseEntity.status(HttpStatus.OK).body(user);
     }
 
     public static User findUser(String nickname, JdbcTemplate jdbcTemplate) {

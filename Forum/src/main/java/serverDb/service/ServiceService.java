@@ -48,7 +48,7 @@ public class ServiceService {
         final int user = jdbcTemplate.queryForObject(sql, Integer.class);
         responseBody.put("user", user);
 
-        return new ResponseEntity(responseBody, HttpStatus.OK);
+        return ResponseEntity.status(HttpStatus.OK).body(responseBody);
     }
 
 }

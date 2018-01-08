@@ -35,8 +35,9 @@ public class ForumService {
 //          **************************************find user**************************************
             User user = findUser(forum.getUser(), jdbcTemplate);
             if (user == null) {
-                return new ResponseEntity(Error.getJson("Can't find user with nickname: " + forum.getUser()),
-                        HttpStatus.NOT_FOUND);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        Error.getJson("Can't find user with nickname: " + forum.getUser()));
+
             }
 //          **************************************find user**************************************
 
@@ -45,18 +46,18 @@ public class ForumService {
             final String sql = "INSERT INTO Forum(slug, title, \"user\", userId) VALUES(?,?,?,?)";
             jdbcTemplate.update(sql, new Object[] { forum.getSlug(), forum.getTitle(), forum.getUser(), user.getId() });
 
-            return new ResponseEntity(forum, HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED).body(forum);
 
         } catch (DuplicateKeyException e) {
 
             Forum duplicateForum = findForum(forum.getSlug(), jdbcTemplate);
 
-            return new ResponseEntity(duplicateForum, HttpStatus.CONFLICT);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicateForum);
+
 
         } catch (DataIntegrityViolationException e) {
-
-            return new ResponseEntity(Error.getJson("Can't find user with nickname: " + forum.getUser()),
-                    HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    Error.getJson("Can't find user with nickname: " + forum.getUser()));
         }
     }
 
@@ -65,8 +66,8 @@ public class ForumService {
 //      **************************************find user**************************************
         User user = findUser(thread.getAuthor(), jdbcTemplate);
         if (user == null) {
-            return new ResponseEntity(Error.getJson("Can't find user with nickname: " + thread.getAuthor()),
-                    HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    Error.getJson("Can't find user with nickname: " + thread.getAuthor()));
         }
 //      **************************************find user**************************************
 
@@ -75,8 +76,8 @@ public class ForumService {
 //      **************************************find forum**************************************
         Forum forum = findForum(forum_slug, jdbcTemplate);
         if (forum == null) {
-            return new ResponseEntity(Error.getJson("Can't find forum: " + forum_slug),
-                    HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    Error.getJson("Can't find forum: " + forum_slug));
         }
 //      **************************************find forum**************************************
 
@@ -89,7 +90,7 @@ public class ForumService {
 
             Thread duplicateThread = findThread(thread.getSlug(), -1, jdbcTemplate);
 
-            return new ResponseEntity(duplicateThread, HttpStatus.CONFLICT);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicateThread);
 
         }
         thread.setId(id);
@@ -102,7 +103,7 @@ public class ForumService {
                 "ON CONFLICT DO NOTHING";
         jdbcTemplate.update(sql, new Object[] {user.getId(), forum.getId()});
 
-        return new ResponseEntity(thread, HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(thread);
 
     }
 
@@ -110,12 +111,10 @@ public class ForumService {
 
         Forum forum = findForum(slug, jdbcTemplate);
         if (forum == null) {
-            return new ResponseEntity(Error.getJson("Can't find forum: " + slug),
-                    HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find forum: " + slug));
         }
 
-        return new ResponseEntity(forum, HttpStatus.OK);
-
+        return ResponseEntity.status(HttpStatus.OK).body(forum);
     }
 
     public ResponseEntity getThreads(String slug, Integer limit, String since, Boolean desc) throws ParseException {
@@ -123,8 +122,7 @@ public class ForumService {
 //      **************************************find forum**************************************
         Forum forum = findForum(slug, jdbcTemplate);
         if (forum == null) {
-            return new ResponseEntity(Error.getJson("Can't find forum: " + slug),
-                    HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find forum: " + slug));
         }
 //      **************************************find forum**************************************
 
@@ -154,7 +152,7 @@ public class ForumService {
 
         List<Thread> threads = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), ThreadRowMapper.INSTANCE);
 
-        return new ResponseEntity(threads, HttpStatus.OK);
+        return ResponseEntity.status(HttpStatus.OK).body(threads);
     }
 
     public ResponseEntity getUsers(String slug, Integer limit, String since, Boolean desc) {
@@ -162,8 +160,7 @@ public class ForumService {
 //      **************************************find forum**************************************
         Forum forum = findForum(slug, jdbcTemplate);
         if (forum == null) {
-            return new ResponseEntity(Error.getJson("Can't find forum: " + slug),
-                    HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find forum: " + slug));
         }
 //      **************************************find forum**************************************
         int id = forum.getId();
@@ -198,7 +195,7 @@ public class ForumService {
 
         List<User> users = jdbcTemplate.query(sql.toString(), args.toArray(), UserRowMapper.INSTANCE);
 
-        return new ResponseEntity(users, HttpStatus.OK);
+        return ResponseEntity.status(HttpStatus.OK).body(users);
     }
 
     public static Forum findForum(String slug, JdbcTemplate jdbcTemplate) {

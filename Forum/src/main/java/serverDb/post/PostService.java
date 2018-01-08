@@ -30,7 +30,6 @@ public class PostService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-
     public ResponseEntity editMessage(long id, Post post) {
 
         String message = post.getMessage();
@@ -49,11 +48,13 @@ public class PostService {
                 post.setEdited(Boolean.TRUE);
             }
 
-            return new ResponseEntity(post, HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.OK).body(post);
+
 
         } catch (DataIntegrityViolationException e) {
 
-            return new ResponseEntity(post, HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.OK).body(post);
+
         }
 
     }
@@ -105,12 +106,10 @@ public class PostService {
 
             }
 
-            return new ResponseEntity(responseBody, HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.OK).body(responseBody);
 
         } catch (EmptyResultDataAccessException e) {
-
-            return new ResponseEntity(Error.getJson("Can't find post: " + id),
-                    HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find post: " + id));
 
         }
     }
