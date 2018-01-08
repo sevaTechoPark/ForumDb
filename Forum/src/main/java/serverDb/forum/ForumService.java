@@ -203,7 +203,7 @@ public class ForumService {
         }
 
 
-        List<User> users = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), new UserRowMapper());
+        List<User> users = jdbcTemplate.query(sql.toString(), args.toArray(), new UserRowMapper());
 
         return new ResponseEntity(users, HttpStatus.OK);
     }
@@ -213,10 +213,9 @@ public class ForumService {
         try {
 
             final String sql = "SELECT * from Forum WHERE slug::citext = ?::citext";
-            Forum forum = jdbcTemplate.queryForObject(
-                    sql, new Object[] { slug }, new ForumRowMapper());
 
-            return forum;
+            return jdbcTemplate.queryForObject(
+                    sql, new Object[] {slug}, new ForumRowMapper());
 
         } catch (Exception e) {
 
