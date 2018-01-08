@@ -35,8 +35,7 @@ public class ForumService {
 //          **************************************find user**************************************
             User user = findUser(forum.getUser(), jdbcTemplate);
             if (user == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                        Error.getJson("Can't find user with nickname: " + forum.getUser()));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
 
             }
 //          **************************************find user**************************************
@@ -56,8 +55,7 @@ public class ForumService {
 
 
         } catch (DataIntegrityViolationException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    Error.getJson("Can't find user with nickname: " + forum.getUser()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
     }
 
@@ -66,8 +64,7 @@ public class ForumService {
 //      **************************************find user**************************************
         User user = findUser(thread.getAuthor(), jdbcTemplate);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    Error.getJson("Can't find user with nickname: " + thread.getAuthor()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
 //      **************************************find user**************************************
 
@@ -76,12 +73,11 @@ public class ForumService {
 //      **************************************find forum**************************************
         Forum forum = findForum(forum_slug, jdbcTemplate);
         if (forum == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    Error.getJson("Can't find forum: " + forum_slug));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
 //      **************************************find forum**************************************
 
-        int id = (int) jdbcTemplate.queryForObject("SELECT nextval('thread_id_seq')", Integer.class);
+        int id = jdbcTemplate.queryForObject("SELECT nextval('thread_id_seq')", Integer.class);
         try {
             final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum, id, userId, forumId) VALUES(?,?,?,?,?,?,?,?,?)";
             jdbcTemplate.update(sql, new Object[] { thread.getSlug(), thread.getTitle(), thread.getAuthor(),
@@ -111,7 +107,7 @@ public class ForumService {
 
         Forum forum = findForum(slug, jdbcTemplate);
         if (forum == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find forum: " + slug));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(forum);
@@ -122,7 +118,7 @@ public class ForumService {
 //      **************************************find forum**************************************
         Forum forum = findForum(slug, jdbcTemplate);
         if (forum == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find forum: " + slug));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
 //      **************************************find forum**************************************
 
@@ -160,7 +156,7 @@ public class ForumService {
 //      **************************************find forum**************************************
         Forum forum = findForum(slug, jdbcTemplate);
         if (forum == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find forum: " + slug));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
 //      **************************************find forum**************************************
         int id = forum.getId();

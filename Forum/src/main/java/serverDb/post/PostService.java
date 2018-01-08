@@ -109,8 +109,7 @@ public class PostService {
             return ResponseEntity.status(HttpStatus.OK).body(responseBody);
 
         } catch (EmptyResultDataAccessException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find post: " + id));
-
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
     }
 

@@ -47,8 +47,7 @@ public class UserService{
 //          **************************************find user**************************************
             User oldUser = findUser(user.getNickname(), jdbcTemplate);
             if (oldUser == null) {
-                return new ResponseEntity(Error.getJson("Can't find user with nickname: " + user.getNickname()),
-                        HttpStatus.NOT_FOUND);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
             }
 //          **************************************find user**************************************
 
@@ -70,7 +69,7 @@ public class UserService{
 
         } catch (DuplicateKeyException e) {
 
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Error.getJson("this email has already existed"));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Error.getJson(""));
 
         }
     }
@@ -78,7 +77,7 @@ public class UserService{
     public ResponseEntity getUser(String nickname) {
         User user = findUser(nickname, jdbcTemplate);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson("Can't find user with nickname: " + nickname));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
 
         }
 
