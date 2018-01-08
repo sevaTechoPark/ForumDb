@@ -416,10 +416,9 @@ public class ThreadService {
         try {
 
             final String sql = "SELECT * from Thread WHERE id = ? OR slug::citext = ?::citext";
-            Thread thread = jdbcTemplate.queryForObject(
-                    sql, new Object[] {id, slug}, ThreadRowMapper.INSTANCE);
 
-            return thread;
+            return jdbcTemplate.queryForObject(
+                    sql, new Object[] {id, slug}, ThreadRowMapper.INSTANCE);
 
         } catch (Exception e) {
 

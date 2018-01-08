@@ -1,5 +1,6 @@
 package serverDb.user;
 
+import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 
 import org.springframework.dao.DuplicateKeyException;
@@ -89,9 +90,9 @@ public class UserService{
         try {
 
             final String sql = "SELECT * from FUser WHERE  nickname::citext =  ?::citext";
-            User user = jdbcTemplate.queryForObject(
+
+            return jdbcTemplate.queryForObject(
                     sql, new Object[]{ nickname }, UserRowMapper.INSTANCE);
-            return user;
 
         } catch (Exception e) {
 
