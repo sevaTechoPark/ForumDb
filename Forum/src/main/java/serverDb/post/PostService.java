@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 
-import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 import serverDb.forum.Forum;
 import serverDb.forum.ForumRowMapper;
@@ -68,7 +67,7 @@ public class PostService {
 
             String sql;
             sql = "SELECT * from Post WHERE id = ?";
-            Post post = jdbcTemplate.queryForObject(sql, new Object[] { id }, new PostRowMapper());
+            Post post = jdbcTemplate.queryForObject(sql, new Object[] { id }, PostRowMapper.INSTANCE);
 
             if (Arrays.asList(related).contains("only post")) {
                 return new ResponseEntity(post, HttpStatus.OK);
@@ -79,8 +78,8 @@ public class PostService {
             if (Arrays.asList(related).contains("thread")) {
 
                 sql = "SELECT * from Thread WHERE id = ?";
-                Thread thread = jdbcTemplate.queryForObject(sql, new Object[] { post.getThread() },
-                        new ThreadRowMapper());
+                Thread thread = jdbcTemplate.queryForObject(sql, new Object[] {post.getThread()},
+                        ThreadRowMapper.INSTANCE);
 
                 responseBody.set("thread", thread.getJson());
 
@@ -89,8 +88,8 @@ public class PostService {
             if (Arrays.asList(related).contains("user")) {
 
                 sql = "SELECT * from FUser WHERE nickname = ?";
-                User user = jdbcTemplate.queryForObject(sql, new Object[] { post.getAuthor() },
-                        new UserRowMapper());
+                User user = jdbcTemplate.queryForObject(sql, new Object[] {post.getAuthor()},
+                        UserRowMapper.INSTANCE);
 
                 responseBody.set("author", user.getJson());
 
@@ -99,8 +98,8 @@ public class PostService {
             if (Arrays.asList(related).contains("forum")) {
 
                 sql = "SELECT * from Forum WHERE id = ?";
-                Forum forum = jdbcTemplate.queryForObject(sql, new Object[] { post.getForumId() },
-                        new ForumRowMapper());
+                Forum forum = jdbcTemplate.queryForObject(sql, new Object[] {post.getForumId()},
+                        ForumRowMapper.INSTANCE);
 
                 responseBody.set("forum", forum.getJson());
 

@@ -1,10 +1,8 @@
 package serverDb.user;
 
-import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.dao.EmptyResultDataAccessException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,7 +34,7 @@ public class UserService{
             final String sql = "SELECT * FROM FUser WHERE nickname::citext =  ?::citext"
                     + " OR email::citext =  ?::citext";
 
-            List<User> users = jdbcTemplate.query(sql, new Object[] { user.getNickname(), user.getEmail() }, new UserRowMapper());
+            List<User> users = jdbcTemplate.query(sql, new Object[] {user.getNickname(), user.getEmail()}, UserRowMapper.INSTANCE);
 
             return new ResponseEntity(users, HttpStatus.CONFLICT); // 409
         }
@@ -93,7 +91,7 @@ public class UserService{
 
             final String sql = "SELECT * from FUser WHERE  nickname::citext =  ?::citext";
             User user = jdbcTemplate.queryForObject(
-                    sql, new Object[]{ nickname }, new UserRowMapper());
+                    sql, new Object[]{ nickname }, UserRowMapper.INSTANCE);
             return user;
 
         } catch (Exception e) {

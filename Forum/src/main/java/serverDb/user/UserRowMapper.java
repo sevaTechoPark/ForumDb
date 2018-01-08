@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class UserRowMapper implements RowMapper<User> {
+    public static final UserRowMapper INSTANCE = new UserRowMapper();
+
     public User mapRow(ResultSet rs, int rowNum) throws SQLException {
         User user = new User();
 

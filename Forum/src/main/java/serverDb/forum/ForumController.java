@@ -1,16 +1,12 @@
 package serverDb.forum;
 
-import org.springframework.format.annotation.DateTimeFormat;
 import serverDb.thread.Thread;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Timestamp;
 import java.text.ParseException;
-import java.time.ZonedDateTime;
-
 
 @RestController
 @RequestMapping("/api/forum")

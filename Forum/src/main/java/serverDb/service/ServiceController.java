@@ -1,11 +1,8 @@
 package serverDb.service;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import serverDb.post.Post;
-
 
 @RestController
 @RequestMapping("/api/service")
@@ -31,7 +28,5 @@ public class ServiceController {
 
         return serviceService.getDatabaseInfo();
     }
-
-
 
 }

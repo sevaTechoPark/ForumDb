@@ -4,13 +4,11 @@ package serverDb.thread;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
-import serverDb.forum.Forum;
 import serverDb.post.Post;
 import serverDb.post.PostRowMapper;
 import serverDb.user.User;
 import serverDb.vote.Vote;
 
-import static serverDb.forum.ForumService.findForum;
 import static serverDb.user.UserService.findUser;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +19,6 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.*;
@@ -412,7 +409,7 @@ public class ThreadService {
 
         }
 
-        List<Post> posts = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), new PostRowMapper());
+        List<Post> posts = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), PostRowMapper.INSTANCE);
 
         return new ResponseEntity(posts, HttpStatus.OK);
 
@@ -424,7 +421,7 @@ public class ThreadService {
 
             final String sql = "SELECT * from Thread WHERE id = ? OR slug::citext = ?::citext";
             Thread thread = jdbcTemplate.queryForObject(
-                    sql, new Object[] {id, slug}, new ThreadRowMapper());
+                    sql, new Object[] {id, slug}, ThreadRowMapper.INSTANCE);
 
             return thread;
 

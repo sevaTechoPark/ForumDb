@@ -2,9 +2,12 @@ package serverDb.forum;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 
-import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 import serverDb.thread.Thread;
 import serverDb.thread.ThreadRowMapper;
@@ -14,17 +17,7 @@ import serverDb.user.UserRowMapper;
 import static serverDb.thread.ThreadService.findThread;
 import static serverDb.user.UserService.findUser;
 
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
-import org.springframework.jdbc.core.JdbcTemplate;
-
 import java.text.ParseException;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -159,7 +152,7 @@ public class ForumService {
             args.add(limit.intValue());
         }
 
-        List<Thread> threads = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), new ThreadRowMapper());
+        List<Thread> threads = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), ThreadRowMapper.INSTANCE);
 
         return new ResponseEntity(threads, HttpStatus.OK);
     }
@@ -203,7 +196,7 @@ public class ForumService {
         }
 
 
-        List<User> users = jdbcTemplate.query(sql.toString(), args.toArray(), new UserRowMapper());
+        List<User> users = jdbcTemplate.query(sql.toString(), args.toArray(), UserRowMapper.INSTANCE);
 
         return new ResponseEntity(users, HttpStatus.OK);
     }
@@ -215,14 +208,13 @@ public class ForumService {
             final String sql = "SELECT * from Forum WHERE slug::citext = ?::citext";
 
             return jdbcTemplate.queryForObject(
-                    sql, new Object[] {slug}, new ForumRowMapper());
+                    sql, new Object[] {slug}, ForumRowMapper.INSTANCE);
 
         } catch (Exception e) {
 
             return null;
 
         }
-
     }
 }
 

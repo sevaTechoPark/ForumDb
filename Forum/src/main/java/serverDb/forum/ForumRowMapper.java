@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class ForumRowMapper implements RowMapper<Forum> {
+    public static final ForumRowMapper INSTANCE = new ForumRowMapper();
+
     public Forum mapRow(ResultSet rs, int rowNum) throws SQLException {
         Forum forum = new Forum();
 

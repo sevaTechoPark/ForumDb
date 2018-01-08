@@ -1,6 +1,5 @@
 package serverDb.post;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,8 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.sql.Timestamp;
-import java.time.ZonedDateTime;
-
 
 public class Post {
 
@@ -36,7 +33,6 @@ public class Post {
     public Post() {
 
     }
-
 
     public int getForumId() {
         return forumId;
