@@ -35,7 +35,7 @@ CREATE TABLE Thread(
   FOREIGN KEY (forumId) REFERENCES Forum(id)
 );
 
-CREATE INDEX thread_forum ON Thread(forumId);
+CREATE INDEX thread_forum_created ON Thread(forumId, created);
 
 CREATE TABLE Post(
   id SERIAL4 PRIMARY KEY,
@@ -55,7 +55,7 @@ CREATE TABLE Post(
 
 CREATE INDEX post_thread_id ON Post(thread, id);
 CREATE INDEX post_thread_path ON Post(thread, path);
-CREATE INDEX post_id_path1 ON Post(id, (path[1]));
+CREATE INDEX post_id_path ON Post(id, path);
 
 CREATE TABLE Vote(
   userId int4,
