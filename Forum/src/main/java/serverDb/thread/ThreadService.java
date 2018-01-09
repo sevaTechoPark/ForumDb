@@ -220,6 +220,7 @@ public class ThreadService {
 
     }
 
+    @Transactional
     public ResponseEntity voteThread(String slug, int id, Vote vote) {
 
 //      **************************************find user**************************************
@@ -304,27 +305,6 @@ public class ThreadService {
         final List<Object> args = new ArrayList<>();
 
         switch (sort) {
-            case "flat":
-                sql.append("SELECT * from Post WHERE thread = ?");
-                args.add(threadId);
-
-                if (since != null) {
-                    sql.append(" AND id");
-
-                    sql.append(moreOrLess);
-
-                    sql.append(" ?");
-
-                    args.add(since);
-                }
-
-                sql.append(" ORDER BY created " + descOrAsc + " , id" + descOrAsc);
-
-                if (limit != null) {
-                    sql.append(" LIMIT ?");
-                    args.add(limit.intValue());
-                }
-                break;
             case "tree":
                 sql.append("SELECT * from Post WHERE thread = ?");
                 args.add(threadId);
@@ -344,7 +324,7 @@ public class ThreadService {
 
                 if (limit != null) {
                     sql.append(" LIMIT ?");
-                    args.add(limit.intValue());
+                    args.add(limit);
                 }
                 break;
             case "parent_tree":
@@ -375,13 +355,14 @@ public class ThreadService {
 
                 if (limit != null) {
                     sql.append(" order by id " + descOrAsc +" LIMIT ?)");
-                    args.add(limit.intValue());
+                    args.add(limit);
                 }
 
                 sql.append(" ORDER BY path");
 
                 sql.append(descOrAsc);
                 break;
+            case "flat":
             default:
                 sql.append("SELECT * from Post WHERE thread = ?");
                 args.add(threadId);
@@ -401,7 +382,7 @@ public class ThreadService {
 
                 if (limit != null) {
                     sql.append(" LIMIT ?");
-                    args.add(limit.intValue());
+                    args.add(limit);
                 }
 
         }
