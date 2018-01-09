@@ -53,8 +53,7 @@ CREATE TABLE Post(
   FOREIGN KEY (forumId) REFERENCES Forum(id)
 );
 
-CREATE INDEX post_thread_id_created ON Post(thread, id, created);
--- CREATE INDEX post_thread_path1 ON Post(thread, (path[1]));
+CREATE INDEX post_thread_id ON Post(thread, id);
 CREATE INDEX post_thread_path ON Post(thread, path);
 CREATE INDEX post_id_path1 ON Post(id, (path[1]));
 

@@ -220,7 +220,6 @@ public class ThreadService {
 
     }
 
-    @Transactional
     public ResponseEntity voteThread(String slug, int id, Vote vote) {
 
 //      **************************************find user**************************************
@@ -249,15 +248,13 @@ public class ThreadService {
                     sqlFindVote, new Object[]{userId, threadId}, Integer.class);
 
             if (vote.getVoice() == voice) { // his voice doesn't change
-                return new ResponseEntity(thread, HttpStatus.OK);
+                return ResponseEntity.status(HttpStatus.OK).body(thread);
 
             } else {    // voice changed.
 
                 final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE userId = ? AND threadId = ?";
-                jdbcTemplate.update(sqlUpdateVote, vote.getVoice(), userId, threadId);
-
+                jdbcTemplate.update(sqlUpdateVote, voiceForUpdate, userId, threadId);
                 voiceForUpdate = vote.getVoice() * 2;  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
-
             }
 
         } catch (EmptyResultDataAccessException e) {    // user hasn't voted
@@ -268,11 +265,13 @@ public class ThreadService {
 
         }
 
-        final String sql = "UPDATE Thread SET votes = votes + ? WHERE id = ?";
+        if (voiceForUpdate != 0) {
+            final String sql = "UPDATE Thread SET votes = votes + ? WHERE id = ?";
 
-        jdbcTemplate.update(sql, voiceForUpdate, threadId); // update threads
+            jdbcTemplate.update(sql, voiceForUpdate, threadId); // update threads
 
-        thread.setVotes(thread.getVotes() + voiceForUpdate);
+            thread.setVotes(thread.getVotes() + voiceForUpdate);
+        }
 
         return ResponseEntity.status(HttpStatus.OK).body(thread);
     }
