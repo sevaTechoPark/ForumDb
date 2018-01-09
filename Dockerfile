@@ -18,7 +18,7 @@ RUN echo "listen_addresses='*'" >> /etc/postgresql/$PGVER/main/postgresql.conf
 RUN echo "synchronous_commit=off" >> /etc/postgresql/$PGVER/main/postgresql.conf
 RUN echo "shared_buffers = 350MB" >> /etc/postgresql/$PGVER/main/postgresql.conf
 RUN echo "max_wal_size = 1GB" >> /etc/postgresql/$PGVER/main/postgresql.conf
-RUN echo "work_mem = 32MB" >> /etc/postgresql/$PGVER/main/postgresql.conf
+RUN echo "work_mem = 8MB" >> /etc/postgresql/$PGVER/main/postgresql.conf
 RUN echo "fsync = off" >> /etc/postgresql/$PGVER/main/postgresql.conf
 RUN echo "full_page_writes = off" >> /etc/postgresql/$PGVER/main/postgresql.conf
  
