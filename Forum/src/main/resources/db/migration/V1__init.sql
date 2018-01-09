@@ -33,7 +33,6 @@ CREATE TABLE Thread(
   votes INT4 DEFAULT 0,
   FOREIGN KEY (userId) REFERENCES FUser(id),
   FOREIGN KEY (forumId) REFERENCES Forum(id)
-
 );
 
 CREATE INDEX thread_forum ON Thread(forumId);
@@ -41,7 +40,7 @@ CREATE INDEX thread_forum ON Thread(forumId);
 CREATE TABLE Post(
   id SERIAL4 PRIMARY KEY,
   forum text,
-  forumId int4 references Forum(id),
+  forumId int4,
   author citext,
   thread int4,
   created timestamp(6) with time zone DEFAULT now() NOT NULL,
@@ -54,8 +53,7 @@ CREATE TABLE Post(
   FOREIGN KEY (forumId) REFERENCES Forum(id)
 );
 
-CREATE INDEX post_thread_created_id ON Post(thread, created, id);
-CREATE INDEX post_thread_path1 ON Post(thread, (path[1]));
+CREATE INDEX post_thread_id ON Post(thread, id);
 CREATE INDEX post_thread_path ON Post(thread, path);
 CREATE INDEX post_id_path1 ON Post(id, (path[1]));
 

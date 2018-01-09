@@ -319,7 +319,6 @@ public class ThreadService {
                 }
 
                 sql.append(" ORDER BY path");
-
                 sql.append(descOrAsc);
 
                 if (limit != null) {
@@ -349,7 +348,6 @@ public class ThreadService {
                     sql.append(moreOrLess);
 
                     sql.append(" (SELECT path[1] FROM Post where id = ?)");
-
                     args.add(since);
                 }
 
@@ -359,8 +357,8 @@ public class ThreadService {
                 }
 
                 sql.append(" ORDER BY path");
-
                 sql.append(descOrAsc);
+
                 break;
             case "flat":
             default:
@@ -368,16 +366,12 @@ public class ThreadService {
                 args.add(threadId);
                 if (since != null) {
                     sql.append(" AND id");
-
                     sql.append(moreOrLess);
-
                     sql.append(" ?");
-
                     args.add(since);
                 }
 
                 sql.append(" ORDER BY id");
-
                 sql.append(descOrAsc);
 
                 if (limit != null) {
