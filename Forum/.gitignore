@@ -2,13 +2,3 @@
 /out/
 /target/
 /.idea/*
-
-# Package Files #
-/*.jar
-/*.war
-/*.ear
-/*.iml
-/*.class
-
-# Java #
-/*.class
