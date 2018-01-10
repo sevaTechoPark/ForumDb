@@ -68,7 +68,7 @@ public class PostService {
 
             String sql;
             sql = "SELECT * from Post WHERE id = ?";
-            Post post = jdbcTemplate.queryForObject(sql, new Object[] { id }, PostRowMapper.INSTANCE);
+            Post post = jdbcTemplate.queryForObject(sql, new Object[] { id }, new PostRowMapper());
 
             if (Arrays.asList(related).contains("only post")) {
                 return new ResponseEntity(post, HttpStatus.OK);
@@ -80,7 +80,7 @@ public class PostService {
 
                 sql = "SELECT * from Thread WHERE id = ?";
                 Thread thread = jdbcTemplate.queryForObject(sql, new Object[] {post.getThread()},
-                        ThreadRowMapper.INSTANCE);
+                        new ThreadRowMapper());
 
                 responseBody.set("thread", thread.getJson());
 
@@ -90,7 +90,7 @@ public class PostService {
 
                 sql = "SELECT * from FUser WHERE nickname = ?";
                 User user = jdbcTemplate.queryForObject(sql, new Object[] {post.getAuthor()},
-                        UserRowMapper.INSTANCE);
+                        new UserRowMapper());
 
                 responseBody.set("author", user.getJson());
 
@@ -100,7 +100,7 @@ public class PostService {
 
                 sql = "SELECT * from Forum WHERE id = ?";
                 Forum forum = jdbcTemplate.queryForObject(sql, new Object[] {post.getForumId()},
-                        ForumRowMapper.INSTANCE);
+                        new ForumRowMapper());
 
                 responseBody.set("forum", forum.getJson());
 

@@ -146,7 +146,7 @@ public class ForumService {
             args.add(limit.intValue());
         }
 
-        List<Thread> threads = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), ThreadRowMapper.INSTANCE);
+        List<Thread> threads = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), new ThreadRowMapper());
 
         return ResponseEntity.status(HttpStatus.OK).body(threads);
     }
@@ -189,7 +189,7 @@ public class ForumService {
         }
 
 
-        List<User> users = jdbcTemplate.query(sql.toString(), args.toArray(), UserRowMapper.INSTANCE);
+        List<User> users = jdbcTemplate.query(sql.toString(), args.toArray(), new UserRowMapper());
 
         return ResponseEntity.status(HttpStatus.OK).body(users);
     }
@@ -201,7 +201,7 @@ public class ForumService {
             final String sql = "SELECT * from Forum WHERE slug::citext = ?::citext";
 
             return jdbcTemplate.queryForObject(
-                    sql, new Object[] {slug}, ForumRowMapper.INSTANCE);
+                    sql, new Object[] {slug}, new ForumRowMapper());
 
         } catch (Exception e) {
 
