@@ -35,9 +35,9 @@ public class ThreadService {
     private JdbcTemplate jdbcTemplate;
 
     @Transactional
-    public ResponseEntity createPosts(String slug, int id, List<Post> posts) {
+    public ResponseEntity createPosts(String slug_or_id, List<Post> posts) {
 //      **************************************find thread**************************************
-        Thread thread = findThread(slug, id, jdbcTemplate);
+        Thread thread = findThread(slug_or_id, jdbcTemplate);
         if (thread == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
 
@@ -99,7 +99,7 @@ public class ThreadService {
 
             for (int i = 0; i < posts.size(); i++) {
                 Post post = posts.get(i);
-                id = ids.get(i);
+                int id = ids.get(i);
 
                 ps.setString(1, post.getAuthor());
                 ps.setString(2, post.getMessage());
@@ -160,7 +160,7 @@ public class ThreadService {
 
             for (int i = 0; i < parentPostId.size(); i++) {
 
-                id = ids.get(parentPostId.get(i));
+                int id = ids.get(parentPostId.get(i));
 
                 ps.setInt(1, id);
                 ps.setInt(2, threadId);
@@ -182,10 +182,10 @@ public class ThreadService {
         return ResponseEntity.status(HttpStatus.CREATED).body(posts);
     }
 
-    public ResponseEntity renameThread(String slug, int id, Thread thread) {
+    public ResponseEntity renameThread(String slug_or_id, Thread thread) {
 
 //      **************************************find thread**************************************
-        Thread threadUpdated = findThread(slug, id, jdbcTemplate);
+        Thread threadUpdated = findThread(slug_or_id, jdbcTemplate);
         if (threadUpdated == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
@@ -220,7 +220,7 @@ public class ThreadService {
 
     }
 
-    public ResponseEntity voteThread(String slug, int id, Vote vote) {
+    public ResponseEntity voteThread(String slug_or_id, Vote vote) {
 
 //      **************************************find user**************************************
         User user = findUser(vote.getNickname(), jdbcTemplate);
@@ -230,7 +230,7 @@ public class ThreadService {
 //      **************************************find user**************************************
 
 //      **********************************find thread**************************************
-        Thread thread = findThread(slug, id, jdbcTemplate);
+        Thread thread = findThread(slug_or_id, jdbcTemplate);
         if (thread == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
@@ -276,9 +276,9 @@ public class ThreadService {
         return ResponseEntity.status(HttpStatus.OK).body(thread);
     }
 
-    public ResponseEntity getThread(String slug, int id) {
+    public ResponseEntity getThread(String slug_or_id) {
 
-        Thread thread = findThread(slug, id, jdbcTemplate);
+        Thread thread = findThread(slug_or_id, jdbcTemplate);
         if (thread == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
@@ -286,10 +286,10 @@ public class ThreadService {
         return ResponseEntity.status(HttpStatus.OK).body(thread);
     }
 
-    public ResponseEntity getPosts(String slug, int id, Integer limit, Integer since, String sort, Boolean desc) {
+    public ResponseEntity getPosts(String slug_or_id, Integer limit, Integer since, String sort, Boolean desc) {
 
 //      **************************************find thread**************************************
-        Thread thread = findThread(slug, id, jdbcTemplate);
+        Thread thread = findThread(slug_or_id, jdbcTemplate);
         if (thread == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
 
@@ -385,14 +385,29 @@ public class ThreadService {
         return ResponseEntity.status(HttpStatus.OK).body(posts);
     }
 
-    public static Thread findThread(String slug, int id, JdbcTemplate jdbcTemplate) {
+    public static Thread findThread(String slug_or_id, JdbcTemplate jdbcTemplate) {
+
+        boolean slugOrId = false;
+        int threadId = -1;
+        try {
+            threadId = Integer.parseInt(slug_or_id);
+            slugOrId = true;
+        } catch (java.lang.NumberFormatException e ) {
+            slugOrId = false;
+        }
 
         try {
 
-            final String sql = "SELECT * from Thread WHERE id = ? OR slug::citext = ?::citext";
-
-            return jdbcTemplate.queryForObject(
-                    sql, new Object[] {id, slug}, ThreadRowMapper.INSTANCE);
+            String sql;
+            if (slugOrId) {
+                sql = "SELECT * from Thread WHERE id = ?";
+                return jdbcTemplate.queryForObject(
+                        sql, new Object[] {threadId}, new ThreadRowMapper());
+            } else {
+                sql = "SELECT * from Thread WHERE slug::citext = ?::citext";
+                return jdbcTemplate.queryForObject(
+                        sql, new Object[] {slug_or_id}, new ThreadRowMapper());
+            }
 
         } catch (Exception e) {
 

@@ -84,7 +84,7 @@ public class ForumService {
                     thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug(), id, user.getId(), forum.getId()});
         } catch (DuplicateKeyException e) {
 
-            Thread duplicateThread = findThread(thread.getSlug(), -1, jdbcTemplate);
+            Thread duplicateThread = findThread(thread.getSlug(), jdbcTemplate);
 
             return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicateThread);
 
