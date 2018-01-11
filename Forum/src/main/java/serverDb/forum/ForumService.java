@@ -1,5 +1,13 @@
 package serverDb.forum;
 
+import serverDb.error.Error;
+import serverDb.thread.Thread;
+import serverDb.thread.ThreadRowMapper;
+import serverDb.user.User;
+import serverDb.user.UserRowMapper;
+import static serverDb.thread.ThreadService.findThread;
+import static serverDb.user.UserService.findUser;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,19 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import serverDb.error.Error;
-import serverDb.thread.Thread;
-import serverDb.thread.ThreadRowMapper;
-import serverDb.user.User;
-import serverDb.user.UserRowMapper;
-
-import static serverDb.thread.ThreadService.findThread;
-import static serverDb.user.UserService.findUser;
-
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
-
 
 @Service
 public class ForumService {
@@ -43,7 +41,7 @@ public class ForumService {
             forum.setUser(user.getNickname());
 
             final String sql = "INSERT INTO Forum(slug, title, \"user\", userId) VALUES(?,?,?,?)";
-            jdbcTemplate.update(sql, new Object[] { forum.getSlug(), forum.getTitle(), forum.getUser(), user.getId() });
+            jdbcTemplate.update(sql, new Object[] {forum.getSlug(), forum.getTitle(), forum.getUser(), user.getId()});
 
             return ResponseEntity.status(HttpStatus.CREATED).body(forum);
 
@@ -80,7 +78,7 @@ public class ForumService {
         int id = jdbcTemplate.queryForObject("SELECT nextval('thread_id_seq')", Integer.class);
         try {
             final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum, id, userId, forumId) VALUES(?,?,?,?,?,?,?,?,?)";
-            jdbcTemplate.update(sql, new Object[] { thread.getSlug(), thread.getTitle(), thread.getAuthor(),
+            jdbcTemplate.update(sql, new Object[] {thread.getSlug(), thread.getTitle(), thread.getAuthor(),
                     thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug(), id, user.getId(), forum.getId()});
         } catch (DuplicateKeyException e) {
 
@@ -100,7 +98,6 @@ public class ForumService {
         jdbcTemplate.update(sql, new Object[] {user.getId(), forum.getId()});
 
         return ResponseEntity.status(HttpStatus.CREATED).body(thread);
-
     }
 
     public ResponseEntity getForum(String slug) {
@@ -143,12 +140,12 @@ public class ForumService {
         }
         if (limit != null) {
             sql.append(" LIMIT ?");
-            args.add(limit.intValue());
+            args.add(limit);
         }
 
-        List<Thread> threads = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), ThreadRowMapper.INSTANCE);
-
-        return ResponseEntity.status(HttpStatus.OK).body(threads);
+        return ResponseEntity.status(HttpStatus.OK).body(
+                jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), ThreadRowMapper.INSTANCE)
+        );
     }
 
     public ResponseEntity getUsers(String slug, Integer limit, String since, Boolean desc) {
@@ -185,13 +182,13 @@ public class ForumService {
         }
         if (limit != null) {
             sql.append(" LIMIT ?");
-            args.add(limit.intValue());
+            args.add(limit);
         }
 
 
-        List<User> users = jdbcTemplate.query(sql.toString(), args.toArray(), UserRowMapper.INSTANCE);
-
-        return ResponseEntity.status(HttpStatus.OK).body(users);
+        return ResponseEntity.status(HttpStatus.OK).body(
+                jdbcTemplate.query(sql.toString(), args.toArray(), UserRowMapper.INSTANCE)
+        );
     }
 
     public static Forum findForum(String slug, JdbcTemplate jdbcTemplate) {
@@ -206,7 +203,6 @@ public class ForumService {
         } catch (Exception e) {
 
             return null;
-
         }
     }
 }

@@ -35,7 +35,7 @@ public class ThreadService {
     private JdbcTemplate jdbcTemplate;
 
     @Transactional
-    public ResponseEntity createPosts(String slug_or_id, List<Post> posts) {
+    public ResponseEntity createPosts(String slug_or_id, List<Post> posts) throws SQLException {
 //      **************************************find thread**************************************
         Thread thread = findThread(slug_or_id, jdbcTemplate);
         if (thread == null) {
@@ -84,9 +84,7 @@ public class ThreadService {
 
             if (flag == Boolean.FALSE) {    // no parent message
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(Error.getJson(""));
-
             }
-
         }
 
         Timestamp created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
@@ -127,9 +125,6 @@ public class ThreadService {
 
         } catch (BatchUpdateException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
-
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
 
         sql = "INSERT INTO ForumUsers(userId, forumId) VALUES( (SELECT id FROM FUser WHERE nickname = ?), ?) " +
@@ -150,8 +145,6 @@ public class ThreadService {
 
         } catch (BatchUpdateException e) {
             //
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
 
         sql = "INSERT INTO PostsThread(postId, threadId) VALUES(?,?)";
@@ -170,8 +163,6 @@ public class ThreadService {
             ps.executeBatch();
 
         } catch (BatchUpdateException e) {
-            //
-        } catch (SQLException e) {
             //
         }
 
@@ -261,16 +252,17 @@ public class ThreadService {
 
             final String sqlInsertVote = "INSERT INTO Vote(userId, voice, threadId) VALUES(?,?,?)";
 
-            jdbcTemplate.update(sqlInsertVote, new Object[]{userId, vote.getVoice(), threadId});
+            jdbcTemplate.update(sqlInsertVote, userId, vote.getVoice(), threadId);
 
         }
 
         if (voiceForUpdate != 0) {
-            final String sql = "UPDATE Thread SET votes = votes + ? WHERE id = ?";
+            int threadVoices = thread.getVotes() + voiceForUpdate;
 
-            jdbcTemplate.update(sql, voiceForUpdate, threadId); // update threads
+            final String sql = "UPDATE Thread SET votes = ? WHERE id = ?";
+            jdbcTemplate.update(sql, threadVoices, threadId); // update threads
 
-            thread.setVotes(thread.getVotes() + voiceForUpdate);
+            thread.setVotes(threadVoices);
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(thread);
@@ -380,9 +372,9 @@ public class ThreadService {
 
         }
 
-        List<Post> posts = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), PostRowMapper.INSTANCE);
-
-        return ResponseEntity.status(HttpStatus.OK).body(posts);
+        return ResponseEntity.status(HttpStatus.OK).body(
+                jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), PostRowMapper.INSTANCE)
+        );
     }
 
     public static Thread findThread(String slug_or_id, JdbcTemplate jdbcTemplate) {
@@ -393,7 +385,7 @@ public class ThreadService {
             threadId = Integer.parseInt(slug_or_id);
             slugOrId = true;
         } catch (java.lang.NumberFormatException e ) {
-            slugOrId = false;
+            //
         }
 
         try {
@@ -413,7 +405,6 @@ public class ThreadService {
 
             return null;
         }
-
     }
 
 }

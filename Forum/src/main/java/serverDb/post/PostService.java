@@ -1,11 +1,5 @@
 package serverDb.post;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.EmptyResultDataAccessException;
-
 import serverDb.error.Error;
 import serverDb.forum.Forum;
 import serverDb.forum.ForumRowMapper;
@@ -14,12 +8,15 @@ import serverDb.thread.ThreadRowMapper;
 import serverDb.user.User;
 import serverDb.user.UserRowMapper;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.Arrays;

@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
+import java.sql.SQLException;
 import java.util.List;
 
 
@@ -23,7 +24,7 @@ public class ThreadController {
     }
 
     @PostMapping(path = "/{slug_or_id}/create")
-    public ResponseEntity createPost(@PathVariable("slug_or_id") String slug_or_id, @RequestBody List<Post> posts) {
+    public ResponseEntity createPost(@PathVariable("slug_or_id") String slug_or_id, @RequestBody List<Post> posts) throws SQLException {
 
        return threadService.createPosts(slug_or_id, posts);
     }

@@ -60,7 +60,7 @@ CREATE INDEX post_id_path ON Post(id, path);
 CREATE TABLE Vote(
   userId int4,
   threadId int4,
-  voice INT2 DEFAULT 0,
+  voice int2 DEFAULT 0,
   FOREIGN KEY (userId) REFERENCES FUser(id),
   FOREIGN KEY (threadId) REFERENCES Thread(id)
 );

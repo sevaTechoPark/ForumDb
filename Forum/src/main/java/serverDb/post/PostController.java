@@ -1,10 +1,8 @@
 package serverDb.post;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 
 @RestController
 @RequestMapping("/api/post")
@@ -26,7 +24,8 @@ public class PostController {
 
 
     @GetMapping(path = "/{id}/details")
-    public ResponseEntity getPost(@PathVariable("id") long id, @RequestParam(value = "related", required = false) String[] related) {
+    public ResponseEntity getPost(@PathVariable("id") long id,
+                                  @RequestParam(value = "related", required = false) String[] related) {
 
         if (related == null) {
             related = new String[0];

@@ -1,17 +1,14 @@
 package serverDb.user;
 
-import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
 
@@ -92,7 +89,7 @@ public class UserService{
             final String sql = "SELECT * from FUser WHERE  nickname::citext =  ?::citext";
 
             return jdbcTemplate.queryForObject(
-                    sql, new Object[]{ nickname }, UserRowMapper.INSTANCE);
+                    sql, new Object[]{nickname}, UserRowMapper.INSTANCE);
 
         } catch (Exception e) {
 
