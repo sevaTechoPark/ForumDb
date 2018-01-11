@@ -166,28 +166,6 @@ public class ThreadService {
             //
         }
 
-        final List<Array> paths = jdbcTemplate.query("SELECT path FROM Post WHERE id >= ? AND id <= ?",
-                new Object[]{ids.get(0), ids.get(ids.size() - 1)}, (resultSet, i) -> resultSet.getArray("path"));
-        sql = "INSERT INTO PathPosts(postId, path) VALUES(?,?)";
-        try(Connection connection = jdbcTemplate.getDataSource().getConnection();
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
-
-            for (int i = 0; i < ids.size(); i++) {
-
-                int id = ids.get(i);
-                Array path = paths.get(i);
-
-                ps.setInt(1, id);
-                ps.setArray(2, path);
-
-                ps.addBatch();
-            }
-            ps.executeBatch();
-
-        } catch (BatchUpdateException e) {
-            //
-        }
-
 //          UPDATE COUNT OF POST
         String sqlUpdate = "UPDATE Forum SET posts = posts + ? WHERE id = ?";
         jdbcTemplate.update(sqlUpdate, posts.size(), thread.getForumId());
@@ -326,7 +304,7 @@ public class ThreadService {
                     sql.append(" AND path");
                     sql.append(moreOrLess);
 
-                    sql.append(" (SELECT path FROM PathPosts where postId = ?)");
+                    sql.append(" (SELECT path FROM Post where id = ?)");
                     args.add(since);
 
                 }
@@ -360,7 +338,7 @@ public class ThreadService {
                 if (since != null) {
                     sql.append(moreOrLess);
 
-                    sql.append(" (SELECT path[1] FROM PathPosts where postId = ?)");
+                    sql.append(" (SELECT path[1] FROM Post where id = ?)");
                     args.add(since);
                 }
 
