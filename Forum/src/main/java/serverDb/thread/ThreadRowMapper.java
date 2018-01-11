@@ -6,7 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class ThreadRowMapper implements RowMapper<Thread> {
-    // public static final ThreadRowMapper INSTANCE = new ThreadRowMapper();
+    public static final ThreadRowMapper INSTANCE = new ThreadRowMapper();
 
     public Thread mapRow(ResultSet rs, int rowNum) throws SQLException {
         Thread thread = new Thread();

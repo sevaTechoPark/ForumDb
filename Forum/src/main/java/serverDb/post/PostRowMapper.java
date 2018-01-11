@@ -6,7 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class PostRowMapper implements RowMapper<Post> {
-    // public static final PostRowMapper INSTANCE = new PostRowMapper();
+    public static final PostRowMapper INSTANCE = new PostRowMapper();
 
     public Post mapRow(ResultSet rs, int rowNum) throws SQLException {
         Post post = new Post();

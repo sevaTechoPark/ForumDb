@@ -35,7 +35,7 @@ public class UserService{
             final String sql = "SELECT * FROM FUser WHERE nickname::citext =  ?::citext"
                     + " OR email::citext =  ?::citext";
 
-            List<User> users = jdbcTemplate.query(sql, new Object[] {user.getNickname(), user.getEmail()}, new UserRowMapper());
+            List<User> users = jdbcTemplate.query(sql, new Object[] {user.getNickname(), user.getEmail()}, UserRowMapper.INSTANCE);
 
             return ResponseEntity.status(HttpStatus.CONFLICT).body(users);
         }
@@ -92,7 +92,7 @@ public class UserService{
             final String sql = "SELECT * from FUser WHERE  nickname::citext =  ?::citext";
 
             return jdbcTemplate.queryForObject(
-                    sql, new Object[]{ nickname }, new UserRowMapper());
+                    sql, new Object[]{ nickname }, UserRowMapper.INSTANCE);
 
         } catch (Exception e) {
 

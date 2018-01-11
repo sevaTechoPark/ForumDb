@@ -380,7 +380,7 @@ public class ThreadService {
 
         }
 
-        List<Post> posts = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), new PostRowMapper());
+        List<Post> posts = jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), PostRowMapper.INSTANCE);
 
         return ResponseEntity.status(HttpStatus.OK).body(posts);
     }
@@ -392,7 +392,7 @@ public class ThreadService {
             final String sql = "SELECT * from Thread WHERE id = ? OR slug::citext = ?::citext";
 
             return jdbcTemplate.queryForObject(
-                    sql, new Object[] {id, slug}, new ThreadRowMapper());
+                    sql, new Object[] {id, slug}, ThreadRowMapper.INSTANCE);
 
         } catch (Exception e) {
 
