@@ -2,7 +2,6 @@ package serverDb.thread;
 
 
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 import serverDb.post.Post;
@@ -22,7 +21,6 @@ import org.springframework.http.ResponseEntity;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.io.Serializable;
 import java.sql.*;
 
 import java.time.ZonedDateTime;
