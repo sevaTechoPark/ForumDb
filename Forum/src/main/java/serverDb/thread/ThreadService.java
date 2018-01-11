@@ -2,6 +2,7 @@ package serverDb.thread;
 
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 import serverDb.post.Post;
@@ -21,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.io.Serializable;
 import java.sql.*;
 
 import java.time.ZonedDateTime;
@@ -157,6 +159,28 @@ public class ThreadService {
 
                 ps.setInt(1, id);
                 ps.setInt(2, threadId);
+
+                ps.addBatch();
+            }
+            ps.executeBatch();
+
+        } catch (BatchUpdateException e) {
+            //
+        }
+
+        final List<Array> paths = jdbcTemplate.query("SELECT path FROM Post WHERE id >= ? AND id <= ?",
+                new Object[]{ids.get(0), ids.get(ids.size() - 1)}, (resultSet, i) -> resultSet.getArray("path"));
+        sql = "INSERT INTO PathPosts(postId, path) VALUES(?,?)";
+        try(Connection connection = jdbcTemplate.getDataSource().getConnection();
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
+
+            for (int i = 0; i < ids.size(); i++) {
+
+                int id = ids.get(i);
+                Array path = paths.get(i);
+
+                ps.setInt(1, id);
+                ps.setArray(2, path);
 
                 ps.addBatch();
             }
@@ -304,7 +328,7 @@ public class ThreadService {
                     sql.append(" AND path");
                     sql.append(moreOrLess);
 
-                    sql.append(" (SELECT path FROM Post where id = ?)");
+                    sql.append(" (SELECT path FROM PathPosts where postId = ?)");
                     args.add(since);
 
                 }
@@ -338,7 +362,7 @@ public class ThreadService {
                 if (since != null) {
                     sql.append(moreOrLess);
 
-                    sql.append(" (SELECT path[1] FROM Post where id = ?)");
+                    sql.append(" (SELECT path[1] FROM PathPosts where postId = ?)");
                     args.add(since);
                 }
 
