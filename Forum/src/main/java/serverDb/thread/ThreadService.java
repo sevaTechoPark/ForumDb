@@ -416,11 +416,11 @@ public class ThreadService {
             if (slugOrId) {
                 sql = "SELECT * from Thread WHERE id = ?";
                 return jdbcTemplate.queryForObject(
-                        sql, new Object[] {threadId}, new ThreadRowMapper());
+                        sql, new Object[] {threadId}, ThreadRowMapper.INSTANCE);
             } else {
                 sql = "SELECT * from Thread WHERE slug::citext = ?::citext";
                 return jdbcTemplate.queryForObject(
-                        sql, new Object[] {slug_or_id}, new ThreadRowMapper());
+                        sql, new Object[] {slug_or_id}, ThreadRowMapper.INSTANCE);
             }
 
         } catch (Exception e) {
