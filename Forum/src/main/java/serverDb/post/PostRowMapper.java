@@ -12,7 +12,6 @@ public class PostRowMapper implements RowMapper<Post> {
         Post post = new Post();
 
         post.setId(rs.getInt("id"));
-        post.setForumId(rs.getInt("forumId"));
         post.setForum(rs.getString("forum"));
         post.setAuthor(rs.getString("author"));
         post.setThread(rs.getInt("thread"));
@@ -20,6 +19,7 @@ public class PostRowMapper implements RowMapper<Post> {
         post.setEdited(rs.getBoolean("isEdited"));
         post.setMessage(rs.getString("message"));
         post.setParent(rs.getInt("parent"));
+         post.setForumId(rs.getInt("forumId"));
 
         return post;
     }

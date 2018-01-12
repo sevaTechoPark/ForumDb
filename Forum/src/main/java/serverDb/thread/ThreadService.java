@@ -1,33 +1,25 @@
 package serverDb.thread;
 
-
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 import serverDb.post.Post;
 import serverDb.post.PostRowMapper;
 import serverDb.user.User;
 import serverDb.vote.Vote;
-
+import serverDb.vote.VoteRowMapper;
 import static serverDb.user.UserService.findUser;
 
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import org.springframework.dao.EmptyResultDataAccessException;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.jdbc.core.JdbcTemplate;
-import serverDb.vote.VoteRowMapper;
 
 import java.sql.*;
-
 import java.time.ZonedDateTime;
-
 import java.util.*;
-
 
 @Service
 public class ThreadService {
@@ -320,7 +312,7 @@ public class ThreadService {
 
         switch (sort) {
             case "tree":
-                sql.append("SELECT * from Post WHERE thread = ?");
+                sql.append("SELECT author, created, forum, id, isEdited, message, parent, thread, forumId from Post WHERE thread = ?");
                 args.add(threadId);
 
                 if (since != null) {
@@ -341,7 +333,7 @@ public class ThreadService {
                 }
                 break;
             case "parent_tree":
-                sql.append("SELECT * from Post WHERE thread = ?");
+                sql.append("SELECT author, created, forum, id, isEdited, message, parent, thread, forumId from Post WHERE thread = ?");
                 args.add(threadId);
                 if (since != null) {
                     sql.append(" AND path[1]");
@@ -375,7 +367,7 @@ public class ThreadService {
 
                 break;
             default:
-                sql.append("SELECT * from Post WHERE thread = ?");
+                sql.append("SELECT author, created, forum, id, isEdited, message, parent, thread, forumId from Post WHERE thread = ?");
                 args.add(threadId);
                 if (since != null) {
                     sql.append(" AND id");
