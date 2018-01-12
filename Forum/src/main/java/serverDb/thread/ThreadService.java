@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import serverDb.vote.VoteRowMapper;
 
 import java.sql.*;
 
@@ -256,17 +257,17 @@ public class ThreadService {
 
         try {   // user has voted
 
-            final String sqlFindVote = "SELECT voice from Vote WHERE userId = ? AND threadId = ?";
-            final int voice = jdbcTemplate.queryForObject(
-                    sqlFindVote, new Object[]{userId, threadId}, Integer.class);
-
+            final String sqlFindVote = "SELECT voice, id from Vote WHERE userId = ? AND threadId = ?";
+             Vote existVote = jdbcTemplate.queryForObject(
+                    sqlFindVote, new Object[]{userId, threadId}, VoteRowMapper.INSTANCE);
+            final int voice = existVote.getVoice();
             if (vote.getVoice() == voice) { // his voice doesn't change
                 return ResponseEntity.status(HttpStatus.OK).body(thread);
 
             } else {    // voice changed.
 
-                final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE userId = ? AND threadId = ?";
-                jdbcTemplate.update(sqlUpdateVote, voiceForUpdate, userId, threadId);
+                final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE id = ?";
+                jdbcTemplate.update(sqlUpdateVote, voiceForUpdate, existVote.getId());
                 voiceForUpdate = vote.getVoice() * 2;  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
             }
 

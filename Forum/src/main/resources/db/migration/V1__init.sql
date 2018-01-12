@@ -60,6 +60,7 @@ CREATE INDEX post_thread_path1 ON Post(thread, (path[1]));
 -- CREATE INDEX post_id_path1 ON Post(id, (path[1]));
 
 CREATE TABLE Vote(
+  id SERIAL4 PRIMARY KEY,
   userId int4,
   threadId int4,
   voice int2 DEFAULT 0,
