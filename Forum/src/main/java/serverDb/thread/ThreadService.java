@@ -159,7 +159,7 @@ public class ThreadService {
             //
         }
 
-        final List<Array> paths = jdbcTemplate.query("SELECT path FROM Post WHERE id >= ? AND id <= ?",
+        final List<Array> paths = jdbcTemplate.query("SELECT path FROM Post WHERE id >= ? AND id <= ? ORDER by id",
                 new Object[]{ids.get(0), ids.get(ids.size() - 1)}, (resultSet, i) -> resultSet.getArray("path"));
         sql = "INSERT INTO PathPosts(postId, path) VALUES(?,?)";
         try(Connection connection = jdbcTemplate.getDataSource().getConnection();
