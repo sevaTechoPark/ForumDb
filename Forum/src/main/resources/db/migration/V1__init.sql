@@ -83,3 +83,10 @@ CREATE TABLE PostsThread(
 );
 
 CREATE INDEX postsThread_thread_parent ON PostsThread(threadId, postId);
+
+CREATE TABLE PathPosts(
+  postId int4,
+  path int4[]
+);
+
+CREATE INDEX pathPosts_id_path ON PathPosts(postId, path);
