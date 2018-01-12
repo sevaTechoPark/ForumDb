@@ -90,7 +90,7 @@ public class ThreadService {
         Timestamp created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
         final List<Integer> ids = jdbcTemplate.query("SELECT nextval('post_id_seq') FROM generate_series(1, ?)", new Object[]{posts.size()}, (rs, rowNum) -> rs.getInt(1));
         sql = "INSERT INTO Post(author, message, parent, thread, forum, forumId, created, id, path) VALUES(?,?,?,?,?,?,?,?," +
-                " (SELECT path FROM Post WHERE id = ?) || ?)";
+                " (SELECT path FROM PathPosts WHERE postId = ?) || ?)";
 
         try(Connection connection = jdbcTemplate.getDataSource().getConnection();
             PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
@@ -373,7 +373,6 @@ public class ThreadService {
                 sql.append(descOrAsc);
 
                 break;
-            case "flat":
             default:
                 sql.append("SELECT * from Post WHERE thread = ?");
                 args.add(threadId);
