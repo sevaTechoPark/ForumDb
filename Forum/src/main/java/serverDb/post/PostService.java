@@ -67,7 +67,7 @@ public class PostService {
             Post post = jdbcTemplate.queryForObject(sql, new Object[] {id}, PostRowMapper.INSTANCE);
 
             if (Arrays.asList(related).contains("only post")) {
-                ResponseEntity.status(HttpStatus.OK).body(post);
+                return ResponseEntity.status(HttpStatus.OK).body(post);
             }
 
             responseBody.set("post", post.getJson());
