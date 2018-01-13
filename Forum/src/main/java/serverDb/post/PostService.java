@@ -63,8 +63,7 @@ public class PostService {
             final ObjectMapper map = new ObjectMapper();
             final ObjectNode responseBody = map.createObjectNode();
 
-            String sql;
-            sql = "SELECT * from Post WHERE id = ?";
+            String sql = "SELECT author, created, forum, id, isEdited, message, parent, thread, forumId from Post WHERE id = ?";
             Post post = jdbcTemplate.queryForObject(sql, new Object[] {id}, PostRowMapper.INSTANCE);
 
             if (Arrays.asList(related).contains("only post")) {
@@ -75,7 +74,7 @@ public class PostService {
 
             if (Arrays.asList(related).contains("thread")) {
 
-                sql = "SELECT * from Thread WHERE id = ?";
+                sql = "SELECT author, forum, id, message, slug, title, votes, created, forumId from Thread WHERE id = ?";
                 Thread thread = jdbcTemplate.queryForObject(sql, new Object[] {post.getThread()},
                         ThreadRowMapper.INSTANCE);
 
@@ -95,7 +94,7 @@ public class PostService {
 
             if (Arrays.asList(related).contains("forum")) {
 
-                sql = "SELECT * from Forum WHERE id = ?";
+                sql = "SELECT posts, slug, threads, title, \"user\", id from Forum WHERE id = ?";
                 Forum forum = jdbcTemplate.queryForObject(sql, new Object[] {post.getForumId()},
                         ForumRowMapper.INSTANCE);
 

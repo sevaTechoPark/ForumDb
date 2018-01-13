@@ -131,7 +131,7 @@ public class ForumService {
             } else {
                 sql.append(" >");
             }
-            //sql.append("= '" + since + "' ");
+
             sql.append("= ?::timestamp with time zone");
             args.add(since);
         }
