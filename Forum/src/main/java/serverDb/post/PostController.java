@@ -17,14 +17,14 @@ public class PostController {
 
 
     @PostMapping(path = "/{id}/details")
-    public ResponseEntity editMessage(@PathVariable("id") long id, @RequestBody Post post) {
+    public ResponseEntity editMessage(@PathVariable("id") int id, @RequestBody Post post) {
 
         return postService.editMessage(id, post);
     }
 
 
     @GetMapping(path = "/{id}/details")
-    public ResponseEntity getPost(@PathVariable("id") long id,
+    public ResponseEntity getPost(@PathVariable("id") int id,
                                   @RequestParam(value = "related", required = false) String[] related) {
 
         if (related == null) {

@@ -159,19 +159,19 @@ public class ThreadService {
             //
         }
 
-        final List<Array> paths = jdbcTemplate.query("SELECT path FROM Post WHERE id >= ? AND id <= ? ORDER by id",
-                new Object[]{ids.get(0), ids.get(ids.size() - 1)}, (resultSet, i) -> resultSet.getArray("path"));
-        sql = "INSERT INTO PathPosts(postId, path) VALUES(?,?)";
+//        final List<Array> paths = jdbcTemplate.query("SELECT path FROM Post WHERE id >= ? AND id <= ? ORDER by id",
+//                new Object[]{ids.get(0), ids.get(ids.size() - 1)}, (resultSet, i) -> resultSet.getArray("path"));
+        sql = "INSERT INTO PathPosts(postId, path) VALUES(?,(SELECT path FROM Post WHERE id = ?))";
         try(Connection connection = jdbcTemplate.getDataSource().getConnection();
             PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
 
             for (int i = 0; i < ids.size(); i++) {
 
                 int id = ids.get(i);
-                Array path = paths.get(i);
+//                Array path = paths.get(i);
 
                 ps.setInt(1, id);
-                ps.setArray(2, path);
+                ps.setInt(2, id);
 
                 ps.addBatch();
             }

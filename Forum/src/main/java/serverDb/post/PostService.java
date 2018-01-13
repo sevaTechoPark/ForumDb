@@ -27,7 +27,7 @@ public class PostService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public ResponseEntity editMessage(long id, Post post) {
+    public ResponseEntity editMessage(int id, Post post) {
 
         String message = post.getMessage();
         ResponseEntity responseEntity = getPost(id, new String[]{"only post"});
@@ -56,7 +56,7 @@ public class PostService {
 
     }
 
-    public ResponseEntity getPost(long id, String[] related) {
+    public ResponseEntity getPost(int id, String[] related) {
 
         try {
 
@@ -65,10 +65,10 @@ public class PostService {
 
             String sql;
             sql = "SELECT * from Post WHERE id = ?";
-            Post post = jdbcTemplate.queryForObject(sql, new Object[] { id }, PostRowMapper.INSTANCE);
+            Post post = jdbcTemplate.queryForObject(sql, new Object[] {id}, PostRowMapper.INSTANCE);
 
             if (Arrays.asList(related).contains("only post")) {
-                return new ResponseEntity(post, HttpStatus.OK);
+                ResponseEntity.status(HttpStatus.OK).body(post);
             }
 
             responseBody.set("post", post.getJson());
