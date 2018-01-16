@@ -83,9 +83,13 @@ public class ForumService {
             thread.setId(id);
             thread.setForum(forum.getSlug());
 
-            String sqlUpdate = "UPDATE Forum SET threads = ? WHERE id = ?;"
-                    + "INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) ON CONFLICT DO NOTHING";
-            jdbcTemplate.update(sqlUpdate, forum.getThreads() + 1, forum.getId(), user.getId(), forum.getId());
+            updateForum(forum.getThreads() + 1, forum.getId(), user.getId());
+//            String sqlUpdate = "UPDATE Forum SET threads = ? WHERE id = ?";
+//            jdbcTemplate.update(sqlUpdate, forum.getThreads() + 1, forum.getId());
+//
+//            sqlUpdate = "INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) " +
+//                    "ON CONFLICT DO NOTHING";
+//            jdbcTemplate.update(sqlUpdate, new Object[] {user.getId(), forum.getId()});
 
             return ResponseEntity.status(HttpStatus.CREATED).body(thread);
         } catch (DuplicateKeyException e) {
@@ -94,6 +98,16 @@ public class ForumService {
 
             return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicateThread);
         }
+    }
+
+    @Transactional
+    public void updateForum(int threads, int forumId, int userId) {
+        String sqlUpdate = "UPDATE Forum SET threads = ? WHERE id = ?";
+        jdbcTemplate.update(sqlUpdate, new Object[] {threads, forumId});
+
+        sqlUpdate = "INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) " +
+                "ON CONFLICT DO NOTHING";
+        jdbcTemplate.update(sqlUpdate, new Object[] {userId, forumId});
     }
 
     public ResponseEntity getForum(String slug) {
