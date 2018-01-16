@@ -76,29 +76,24 @@ public class ForumService {
         }
 //      **************************************find forum**************************************
 
-        int id = jdbcTemplate.queryForObject("SELECT nextval('thread_id_seq')", Integer.class);
         try {
-            final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum, id, userId, forumId) VALUES(?,?,?,?,?,?,?,?,?)";
-            jdbcTemplate.update(sql, new Object[] {thread.getSlug(), thread.getTitle(), thread.getAuthor(),
-                    thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug(), id, user.getId(), forum.getId()});
+            final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum, userId, forumId) VALUES(?,?,?,?,?,?,?,?) RETURNING id";
+            int id = jdbcTemplate.queryForObject(sql, new Object[] {thread.getSlug(), thread.getTitle(), thread.getAuthor(),
+                    thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug(), user.getId(), forum.getId()}, Integer.class);
+            thread.setId(id);
+            thread.setForum(forum.getSlug());
+
+            String sqlUpdate = "UPDATE Forum SET threads = ? WHERE id = ?;"
+                    + "INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) ON CONFLICT DO NOTHING";
+            jdbcTemplate.update(sqlUpdate, forum.getThreads() + 1, forum.getId(), user.getId(), forum.getId());
+            
+            return ResponseEntity.status(HttpStatus.CREATED).body(thread);
         } catch (DuplicateKeyException e) {
 
             Thread duplicateThread = findThread(thread.getSlug(), jdbcTemplate);
 
             return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicateThread);
-
         }
-        thread.setId(id);
-        thread.setForum(forum.getSlug());
-//      UPDATE COUNT OF THREADS
-        String sqlUpdate = "UPDATE Forum SET threads = threads + 1 WHERE id = ?";
-        jdbcTemplate.update(sqlUpdate, forum.getId());
-
-        final String sql = "INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) " +
-                "ON CONFLICT DO NOTHING";
-        jdbcTemplate.update(sql, new Object[] {user.getId(), forum.getId()});
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(thread);
     }
 
     public ResponseEntity getForum(String slug) {
