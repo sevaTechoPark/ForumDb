@@ -86,7 +86,7 @@ public class ForumService {
             String sqlUpdate = "UPDATE Forum SET threads = ? WHERE id = ?;"
                     + "INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) ON CONFLICT DO NOTHING";
             jdbcTemplate.update(sqlUpdate, forum.getThreads() + 1, forum.getId(), user.getId(), forum.getId());
-            
+
             return ResponseEntity.status(HttpStatus.CREATED).body(thread);
         } catch (DuplicateKeyException e) {
 

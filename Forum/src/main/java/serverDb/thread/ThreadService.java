@@ -184,7 +184,7 @@ public class ThreadService {
 //          UPDATE COUNT OF POST
         String sqlUpdate = "UPDATE Forum SET posts = posts + ? WHERE id = ?";
         jdbcTemplate.update(sqlUpdate, posts.size(), thread.getForumId());
-
+        
         return ResponseEntity.status(HttpStatus.CREATED).body(posts);
     }
 
