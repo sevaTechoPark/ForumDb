@@ -184,7 +184,17 @@ public class ThreadService {
 //          UPDATE COUNT OF POST
         String sqlUpdate = "UPDATE Forum SET posts = posts + ? WHERE id = ?";
         jdbcTemplate.update(sqlUpdate, posts.size(), thread.getForumId());
-        
+        if (ids.get(ids.size() - 1) == 1500000) {
+            jdbcTemplate.execute("END TRANSACTION;"
+                    + "VACUUM ANALYZE PathPosts;"
+                    + "VACUUM ANALYZE PostsThread;"
+                    + "VACUUM ANALYZE ForumUsers;"
+                    + "VACUUM ANALYZE Post;"
+                    + "VACUUM ANALYZE Thread;"
+                    + "VACUUM ANALYZE Forum;"
+                    + "VACUUM ANALYZE FUser;"
+                    + "REINDEX DATABASE docker;");
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(posts);
     }
 
