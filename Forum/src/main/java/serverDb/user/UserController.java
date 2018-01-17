@@ -1,6 +1,10 @@
 package serverDb.user;
 
+import serverDb.error.Error;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +24,13 @@ public class UserController {
 
         user.setNickname(nickname);
 
-        return userService.createUser(user);
+        try {
+
+            return userService.createUser(user);
+        } catch (DuplicateKeyException e) {
+
+            return userService.findDuplicatedUser(user);
+        }
     }
 
     @PostMapping(path = "/{nickname}/profile")
@@ -28,7 +38,11 @@ public class UserController {
 
         user.setNickname(nickname);
 
-        return userService.renameUser(user);
+        try {
+            return userService.renameUser(user);
+        } catch (DuplicateKeyException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Error.getJson(""));
+        }
     }
 
     @GetMapping(path = "/{nickname}/profile")
