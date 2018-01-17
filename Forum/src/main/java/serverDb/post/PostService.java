@@ -1,5 +1,6 @@
 package serverDb.post;
 
+import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 import serverDb.forum.Forum;
 import serverDb.forum.ForumRowMapper;
@@ -56,15 +57,16 @@ public class PostService {
 
     }
 
+    @Transactional
     public ResponseEntity getPost(int id, String[] related) {
-        System.out.println(related);
+
         try {
 
             final ObjectMapper map = new ObjectMapper();
             final ObjectNode responseBody = map.createObjectNode();
 
-            String sql = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE id = ?";
-            Post post = jdbcTemplate.queryForObject(sql, new Object[] {id}, serverDb.fasterMappers.PostRowMapper.INSTANCE);
+            String sql = "SELECT author, created, forum, id, isEdited, message, parent, thread, forumId from Post WHERE id = ?";
+            Post post = jdbcTemplate.queryForObject(sql, new Object[] {id}, PostRowMapper.INSTANCE);
 
             if (Arrays.asList(related).contains("only post")) {
                 return ResponseEntity.status(HttpStatus.OK).body(post);
