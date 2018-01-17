@@ -423,7 +423,7 @@ public class ThreadService {
                         sql, new Object[] {slug_or_id}, ThreadRowMapper.INSTANCE);
             }
 
-        } catch (Exception e) {
+        } catch (EmptyResultDataAccessException e) {
 
             return null;
         }

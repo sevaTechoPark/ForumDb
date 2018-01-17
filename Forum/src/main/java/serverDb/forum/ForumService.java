@@ -5,6 +5,7 @@ import serverDb.thread.Thread;
 import serverDb.user.User;
 import serverDb.user.UserService;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -189,7 +190,7 @@ public class ForumService {
             return jdbcTemplate.queryForObject(
                     sql, ForumRowMapper.INSTANCE, slug);
 
-        } catch (Exception e) {
+        } catch (EmptyResultDataAccessException e) {
 
             return null;
         }

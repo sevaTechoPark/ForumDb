@@ -2,6 +2,7 @@ package serverDb.user;
 
 import serverDb.error.Error;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -88,7 +89,7 @@ public class UserService{
             return jdbcTemplate.queryForObject(
                     sql, UserRowMapper.INSTANCE, nickname);
 
-        } catch (Exception e) {
+        } catch (EmptyResultDataAccessException e) {
 
             return null;
         }
