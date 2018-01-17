@@ -24,7 +24,7 @@ public class PostService {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
+    
     public ResponseEntity editMessage(int id, Post post) {
 
         String message = post.getMessage();

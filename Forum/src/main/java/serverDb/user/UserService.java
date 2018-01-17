@@ -41,7 +41,7 @@ public class UserService{
 
         try {
 
-            User oldUser = findUser(user.getNickname(), jdbcTemplate);
+            User oldUser = findUser(user.getNickname());
             if (oldUser == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
             }
@@ -70,7 +70,7 @@ public class UserService{
     }
 
     public ResponseEntity getUser(String nickname) {
-        User user = findUser(nickname, jdbcTemplate);
+        User user = findUser(nickname);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
 
@@ -79,7 +79,7 @@ public class UserService{
         return ResponseEntity.status(HttpStatus.OK).body(user);
     }
 
-    public static User findUser(String nickname, JdbcTemplate jdbcTemplate) {
+    public User findUser(String nickname) {
 
         try {
 

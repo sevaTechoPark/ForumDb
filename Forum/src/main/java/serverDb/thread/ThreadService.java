@@ -3,9 +3,9 @@ package serverDb.thread;
 import serverDb.error.Error;
 import serverDb.post.Post;
 import serverDb.user.User;
+import serverDb.user.UserService;
 import serverDb.vote.Vote;
 import serverDb.vote.VoteRowMapper;
-import static serverDb.user.UserService.findUser;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,9 +26,12 @@ public class ThreadService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private UserService userService;
+
     public ResponseEntity createPosts(String slug_or_id, List<Post> posts) throws SQLException {
 
-        Thread thread = findThread(slug_or_id, jdbcTemplate);
+        Thread thread = findThread(slug_or_id);
         if (thread == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
 
@@ -196,7 +199,7 @@ public class ThreadService {
 
     public ResponseEntity renameThread(String slug_or_id, Thread thread) {
 
-        Thread threadUpdated = findThread(slug_or_id, jdbcTemplate);
+        Thread threadUpdated = findThread(slug_or_id);
         if (threadUpdated == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
@@ -233,12 +236,12 @@ public class ThreadService {
 
     public ResponseEntity voteThread(String slug_or_id, Vote vote) {
 
-        User user = findUser(vote.getNickname(), jdbcTemplate);
+        User user = userService.findUser(vote.getNickname());
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
 
-        Thread thread = findThread(slug_or_id, jdbcTemplate);
+        Thread thread = findThread(slug_or_id);
         if (thread == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
@@ -299,7 +302,7 @@ public class ThreadService {
 
     public ResponseEntity getThread(String slug_or_id) {
 
-        Thread thread = findThread(slug_or_id, jdbcTemplate);
+        Thread thread = findThread(slug_or_id);
         if (thread == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
@@ -310,7 +313,7 @@ public class ThreadService {
     public ResponseEntity getPosts(String slug_or_id, Integer limit, Integer since, String sort, Boolean desc) {
 
 //      **************************************find thread**************************************
-        Thread thread = findThread(slug_or_id, jdbcTemplate);
+        Thread thread = findThread(slug_or_id);
         if (thread == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
 
@@ -396,7 +399,7 @@ public class ThreadService {
         );
     }
 
-    public static Thread findThread(String slug_or_id, JdbcTemplate jdbcTemplate) {
+    public Thread findThread(String slug_or_id) {
 
         boolean slugOrId = false;
         int threadId = -1;

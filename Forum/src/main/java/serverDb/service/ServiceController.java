@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/service")
 public class ServiceController {
 
+    @Autowired
     private ServiceService serviceService;
 
     @Autowired

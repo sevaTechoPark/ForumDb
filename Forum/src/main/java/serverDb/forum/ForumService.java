@@ -1,11 +1,9 @@
 package serverDb.forum;
 
-import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 import serverDb.thread.Thread;
 import serverDb.user.User;
-import static serverDb.thread.ThreadService.findThread;
-import static serverDb.user.UserService.findUser;
+import serverDb.user.UserService;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
@@ -14,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -25,11 +24,14 @@ public class ForumService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private UserService userService;
+
     public ResponseEntity createForum(Forum forum) {
 
         try {
 
-            User user = findUser(forum.getUser(), jdbcTemplate);
+            User user = userService.findUser(forum.getUser());
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
 
@@ -44,7 +46,7 @@ public class ForumService {
 
         } catch (DuplicateKeyException e) {
 
-            Forum duplicateForum = findForum(forum.getSlug(), jdbcTemplate);
+            Forum duplicateForum = findForum(forum.getSlug());
 
             return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicateForum);
 
@@ -57,14 +59,14 @@ public class ForumService {
     @Transactional
     public ResponseEntity createThread(String forum_slug, Thread thread) {
 
-        User user = findUser(thread.getAuthor(), jdbcTemplate);
+        User user = userService.findUser(thread.getAuthor());
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
 
         thread.setAuthor(user.getNickname());
 
-        Forum forum = findForum(forum_slug, jdbcTemplate);
+        Forum forum = findForum(forum_slug);
         if (forum == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
@@ -87,10 +89,10 @@ public class ForumService {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(thread);
     }
-    
+
     public ResponseEntity getForum(String slug) {
 
-        Forum forum = findForum(slug, jdbcTemplate);
+        Forum forum = findForum(slug);
         if (forum == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
@@ -101,7 +103,7 @@ public class ForumService {
     public ResponseEntity getThreads(String slug, Integer limit, String since, Boolean desc) throws ParseException {
 
 //      **************************************find forum**************************************
-        Forum forum = findForum(slug, jdbcTemplate);
+        Forum forum = findForum(slug);
         if (forum == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
@@ -139,7 +141,7 @@ public class ForumService {
     public ResponseEntity getUsers(String slug, Integer limit, String since, Boolean desc) {
 
 //      **************************************find forum**************************************
-        Forum forum = findForum(slug, jdbcTemplate);
+        Forum forum = findForum(slug);
         if (forum == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
@@ -178,7 +180,7 @@ public class ForumService {
         );
     }
 
-    public static Forum findForum(String slug, JdbcTemplate jdbcTemplate) {
+    public Forum findForum(String slug) {
 
         try {
 
