@@ -132,7 +132,7 @@ public class ForumService {
 //      **************************************find forum**************************************
 
         final StringBuilder sql = new StringBuilder("SELECT author, created, forum, id, message, slug, title, votes from Thread WHERE forumId = ?");
-        final List<Object> args = new ArrayList<>();
+        final List<Object> args = new ArrayList<>(3);
         args.add(forum.getId());
 
         if (since != null) {
@@ -156,7 +156,7 @@ public class ForumService {
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), serverDb.fasterMappers.ThreadRowMapper.INSTANCE)
+                jdbcTemplate.query(sql.toString(), args.toArray(), serverDb.fasterMappers.ThreadRowMapper.INSTANCE)
         );
     }
 

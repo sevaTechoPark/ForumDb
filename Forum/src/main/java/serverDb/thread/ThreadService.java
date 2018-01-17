@@ -341,7 +341,7 @@ public class ThreadService {
         String moreOrLess = desc ? " <" : " >";
 
         final StringBuilder sql = new StringBuilder();
-        final List<Object> args = new ArrayList<>();
+        final List<Object> args = new ArrayList<>(4);
 
         sql.append("SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ?");
         args.add(threadId);
