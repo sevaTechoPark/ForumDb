@@ -1,7 +1,5 @@
 package serverDb.user;
 
-import serverDb.error.Error;
-
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -38,7 +36,7 @@ public class UserService{
 
         User oldUser = findUser(user.getNickname());
         if (oldUser == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
         if (user.getEmail() == null) {
@@ -60,7 +58,7 @@ public class UserService{
     public ResponseEntity getUser(String nickname) {
         User user = findUser(nickname);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
 
         }
 

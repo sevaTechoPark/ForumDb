@@ -9,25 +9,25 @@ import org.springframework.web.bind.annotation.*;
 public class ServiceController {
 
     @Autowired
-    private ServiceService serviceService;
+    private ServiceApp serviceApp;
 
     @Autowired
-    public ServiceController(ServiceService serviceService) {
-        this.serviceService = serviceService;
+    public ServiceController(ServiceApp serviceApp) {
+        this.serviceApp = serviceApp;
     }
 
 
     @PostMapping(path = "/clear")
     public ResponseEntity clearDatabase() {
 
-        return serviceService.clearDatabase();
+        return serviceApp.clearDatabase();
     }
 
 
     @GetMapping(path = "/status")
     public ResponseEntity getDatabaseInfo() {
 
-        return serviceService.getDatabaseInfo();
+        return serviceApp.getDatabaseInfo();
     }
 
 }

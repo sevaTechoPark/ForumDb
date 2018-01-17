@@ -1,7 +1,5 @@
 package serverDb.post;
 
-import serverDb.error.Error;
-
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -30,7 +28,7 @@ public class PostController {
             return postService.editMessage(id, post, message);
 
         } catch (EmptyResultDataAccessException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
 
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.status(HttpStatus.OK).body(post);
@@ -51,7 +49,7 @@ public class PostController {
             return postService.getPost(id, related);
 
         } catch (EmptyResultDataAccessException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
     }
 }

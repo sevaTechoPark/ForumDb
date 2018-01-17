@@ -1,6 +1,5 @@
 package serverDb.forum;
 
-import serverDb.error.Error;
 import serverDb.thread.Thread;
 import serverDb.thread.ThreadService;
 
@@ -37,7 +36,7 @@ public class ForumController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(forumService.findForum(forum.getSlug()));
 
         } catch (DataIntegrityViolationException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
     }
 

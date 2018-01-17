@@ -1,6 +1,5 @@
 package serverDb.thread;
 
-import serverDb.error.Error;
 import serverDb.post.Post;
 import serverDb.user.User;
 import serverDb.user.UserService;
@@ -33,7 +32,7 @@ public class ThreadService {
 
         Thread thread = findThread(slug_or_id);
         if (thread == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
 
         }
         if (posts.isEmpty()) {
@@ -76,7 +75,7 @@ public class ThreadService {
 
 
             if (flag == Boolean.FALSE) {    // no parent message
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(Error.getJson(""));
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("{\"message\": \"\"}");
             }
         }
 
@@ -117,7 +116,7 @@ public class ThreadService {
             ps.executeBatch();
 
         } catch (BatchUpdateException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
         sql = "INSERT INTO ForumUsers(userId, forumId) VALUES( (SELECT id FROM FUser WHERE nickname = ?), ?) " +
@@ -201,7 +200,7 @@ public class ThreadService {
 
         Thread threadUpdated = findThread(slug_or_id);
         if (threadUpdated == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
         if (thread.getMessage() == null) {
@@ -221,7 +220,7 @@ public class ThreadService {
 
             int rowsAffected = jdbcTemplate.update(sql, thread.getMessage(), thread.getTitle(), threadUpdated.getId());
             if (rowsAffected == 0) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
             }
 
             return ResponseEntity.status(HttpStatus.OK).body(threadUpdated);
@@ -238,12 +237,12 @@ public class ThreadService {
 
         User user = userService.findUser(vote.getNickname());
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
         Thread thread = findThread(slug_or_id);
         if (thread == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
         int threadId = thread.getId();
@@ -304,7 +303,7 @@ public class ThreadService {
 
         Thread thread = findThread(slug_or_id);
         if (thread == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(thread);
@@ -315,7 +314,7 @@ public class ThreadService {
 //      **************************************find thread**************************************
         Thread thread = findThread(slug_or_id);
         if (thread == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
 
         }
 //      **************************************find thread**************************************

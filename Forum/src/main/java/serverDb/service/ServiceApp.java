@@ -10,11 +10,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Service
-public class ServiceService {
+public class ServiceApp {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
 
     public ResponseEntity clearDatabase() {
 

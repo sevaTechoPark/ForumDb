@@ -1,6 +1,5 @@
 package serverDb.forum;
 
-import serverDb.error.Error;
 import serverDb.thread.Thread;
 import serverDb.user.User;
 import serverDb.user.UserService;
@@ -31,8 +30,7 @@ public class ForumService {
 
         User user = userService.findUser(forum.getUser());
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
-
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
         forum.setUser(user.getNickname());
@@ -48,14 +46,14 @@ public class ForumService {
 
         User user = userService.findUser(thread.getAuthor());
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
         thread.setAuthor(user.getNickname());
 
         Forum forum = findForum(forum_slug);
         if (forum == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
         final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum, userId, forumId) VALUES(?,?,?,?,?,?,?,?) RETURNING id";
@@ -81,7 +79,7 @@ public class ForumService {
 
         Forum forum = findForum(slug);
         if (forum == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(forum);
@@ -91,7 +89,7 @@ public class ForumService {
 
         Forum forum = findForum(slug);
         if (forum == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
         String descOrAsc = desc ? " DESC" : " ASC";
@@ -127,7 +125,7 @@ public class ForumService {
 
         Forum forum = findForum(slug);
         if (forum == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
         final int id = forum.getId();
 

@@ -1,16 +1,12 @@
 package serverDb.post;
 
-import org.springframework.transaction.annotation.Transactional;
-import serverDb.error.Error;
 import serverDb.forum.Forum;
 import serverDb.thread.Thread;
 import serverDb.user.User;
 
+import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;

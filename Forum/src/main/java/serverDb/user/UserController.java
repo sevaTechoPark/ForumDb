@@ -1,7 +1,5 @@
 package serverDb.user;
 
-import serverDb.error.Error;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -41,7 +39,7 @@ public class UserController {
         try {
             return userService.renameUser(user);
         } catch (DuplicateKeyException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Error.getJson(""));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("{\"message\": \"\"}");
         }
     }
 
