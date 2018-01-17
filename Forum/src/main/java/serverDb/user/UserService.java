@@ -26,11 +26,11 @@ public class UserService{
     }
 
     public ResponseEntity findDuplicatedUser(User user) {
-        final String sql = "SELECT * FROM FUser WHERE nickname::citext =  ?::citext"
+        final String sql = "SELECT nickname, fullname, about, email FROM FUser WHERE nickname::citext =  ?::citext"
                 + " OR email::citext =  ?::citext";
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                jdbcTemplate.query(sql, UserRowMapper.INSTANCE, user.getNickname(), user.getEmail())
+                jdbcTemplate.query(sql, serverDb.fasterMappers.UserRowMapper.INSTANCE, user.getNickname(), user.getEmail())
         );
     }
 
