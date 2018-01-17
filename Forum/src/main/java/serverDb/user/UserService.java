@@ -16,18 +16,17 @@ public class UserService{
 
     public ResponseEntity createUser(User user) {
 
-        final String sql = "INSERT INTO FUser(nickname, email, fullname, about) VALUES(?,?,?,?)";
-        jdbcTemplate.update(sql, user.getNickname(), user.getEmail(), user.getFullname(), user.getAbout());
+        jdbcTemplate.update("INSERT INTO FUser(nickname, email, fullname, about) VALUES(?,?,?,?)",
+                user.getNickname(), user.getEmail(), user.getFullname(), user.getAbout());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
     public ResponseEntity findDuplicatedUser(User user) {
-        final String sql = "SELECT nickname, fullname, about, email FROM FUser WHERE nickname::citext =  ?::citext"
-                + " OR email::citext =  ?::citext";
-
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                jdbcTemplate.query(sql, serverDb.fasterMappers.UserRowMapper.INSTANCE, user.getNickname(), user.getEmail())
+                jdbcTemplate.query("SELECT nickname, fullname, about, email FROM FUser WHERE nickname::citext =  ?::citext"
+                                + " OR email::citext =  ?::citext",
+                        serverDb.fasterMappers.UserRowMapper.INSTANCE, user.getNickname(), user.getEmail())
         );
     }
 
@@ -45,17 +44,16 @@ public class UserService{
             user.setFullname(oldUser.getFullname());
         }
 
-        final String sql = "UPDATE FUser SET email = ?, fullname = ?, about = ? WHERE  nickname::citext =  ?::citext";
-        jdbcTemplate.update(sql, user.getEmail(), user.getFullname(), user.getAbout(), user.getNickname());
+        jdbcTemplate.update("UPDATE FUser SET email = ?, fullname = ?, about = ? WHERE  nickname::citext =  ?::citext",
+                user.getEmail(), user.getFullname(), user.getAbout(), user.getNickname());
 
         return ResponseEntity.status(HttpStatus.OK).body(user);
     }
 
     public User getUser(String nickname) {
 
-        final String sql = "SELECT * from FUser WHERE  nickname::citext = ?::citext";
-
-        return jdbcTemplate.queryForObject(sql, UserRowMapper.INSTANCE, nickname);
+        return jdbcTemplate.queryForObject("SELECT * from FUser WHERE  nickname::citext = ?::citext",
+                UserRowMapper.INSTANCE, nickname);
     }
 }
 

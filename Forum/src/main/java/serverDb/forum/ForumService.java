@@ -28,11 +28,10 @@ public class ForumService {
     public ResponseEntity createForum(Forum forum) {
 
         User user = userService.getUser(forum.getUser());
-
         forum.setUser(user.getNickname());
 
-        final String sql = "INSERT INTO Forum(slug, title, \"user\", userId) VALUES(?,?,?,?)";
-        jdbcTemplate.update(sql, forum.getSlug(), forum.getTitle(), forum.getUser(), user.getId());
+        jdbcTemplate.update("INSERT INTO Forum(slug, title, \"user\", userId) VALUES(?,?,?,?)",
+                forum.getSlug(), forum.getTitle(), forum.getUser(), user.getId());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(forum);
 
@@ -45,21 +44,17 @@ public class ForumService {
 
         thread.setAuthor(user.getNickname());
 
-        final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum, userId, forumId) VALUES(?,?,?,?,?,?,?,?) RETURNING id";
-        int id = jdbcTemplate.queryForObject(sql, Integer.class, thread.getSlug(), thread.getTitle(), thread.getAuthor(),
+        int id = jdbcTemplate.queryForObject("INSERT INTO Thread(slug, title, author, message, created, forum, userId, forumId) VALUES(?,?,?,?,?,?,?,?) RETURNING id",
+                Integer.class, thread.getSlug(), thread.getTitle(), thread.getAuthor(),
                 thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug(), user.getId(), forum.getId());
         thread.setId(id);
         thread.setForum(forum.getSlug());
 
         int forumId = forum.getId();
-        int userId = user.getId();
 
-        String sqlUpdate = "UPDATE Forum SET threads = threads + 1 WHERE id = ?";
-        jdbcTemplate.update(sqlUpdate, forumId);
-
-        sqlUpdate = "INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) " +
-                "ON CONFLICT DO NOTHING";
-        jdbcTemplate.update(sqlUpdate, userId, forumId);
+        jdbcTemplate.update("UPDATE Forum SET threads = threads + 1 WHERE id = ?", forumId);
+        jdbcTemplate.update("INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) ON CONFLICT DO NOTHING",
+                user.getId(), forumId);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(thread);
     }
@@ -136,9 +131,8 @@ public class ForumService {
 
     public Forum getForum(String slug) {
 
-        final String sql = "SELECT * from Forum WHERE slug::citext = ?::citext";
-
-        return jdbcTemplate.queryForObject(sql, ForumRowMapper.INSTANCE, slug);
+        return jdbcTemplate.queryForObject("SELECT * from Forum WHERE slug::citext = ?::citext",
+                ForumRowMapper.INSTANCE, slug);
     }
 }
 

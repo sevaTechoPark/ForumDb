@@ -40,8 +40,7 @@ public class ThreadService {
         String forumSlug = thread.getForum();
         int forumId = thread.getForumId();
 
-        String sql;
-        sql = "SELECT postId from PostsThread WHERE threadId = ? LIMIT 1";
+        String sql = "SELECT postId from PostsThread WHERE threadId = ? LIMIT 1";
 
         List<String> withoutDublicate = new ArrayList<>();
         List<Integer> parentPostId = new ArrayList<>();
@@ -210,9 +209,9 @@ public class ThreadService {
         }
 
         try {
-            String sql = "UPDATE Thread SET message = ?, title = ? WHERE id = ?";
 
-            int rowsAffected = jdbcTemplate.update(sql, thread.getMessage(), thread.getTitle(), threadUpdated.getId());
+            int rowsAffected = jdbcTemplate.update("UPDATE Thread SET message = ?, title = ? WHERE id = ?",
+                    thread.getMessage(), thread.getTitle(), threadUpdated.getId());
             if (rowsAffected == 0) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
             }
@@ -242,9 +241,8 @@ public class ThreadService {
 
         try {   // user has voted
 
-            final String sqlFindVote = "SELECT voice, id from Vote WHERE userId = ? AND threadId = ?";
-             Vote existVote = jdbcTemplate.queryForObject(
-                    sqlFindVote, VoteRowMapper.INSTANCE, userId, threadId);
+             Vote existVote = jdbcTemplate.queryForObject("SELECT voice, id from Vote WHERE userId = ? AND threadId = ?",
+                     VoteRowMapper.INSTANCE, userId, threadId);
             if (vote.getVoice() == existVote.getVoice()) { // his voice doesn't change
                 return ResponseEntity.status(HttpStatus.OK).body(thread);
 
@@ -272,16 +270,16 @@ public class ThreadService {
     @Transactional
     public void updateVoices(int currentVoice, int voiceForUpdate, int existVoteId, int threadId, int userId, boolean flag, boolean flagInsert) {
         if (flagInsert) {
-            final String sqlInsertVote = "INSERT INTO Vote(userId, voice, threadId) VALUES(?,?,?)";
-            jdbcTemplate.update(sqlInsertVote, userId, currentVoice, threadId);
+            jdbcTemplate.update("INSERT INTO Vote(userId, voice, threadId) VALUES(?,?,?)",
+                    userId, currentVoice, threadId);
         }
         if (flag) {
-            final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE id = ?";
-            jdbcTemplate.update(sqlUpdateVote, currentVoice, existVoteId);
+            jdbcTemplate.update("UPDATE Vote SET voice = ? WHERE id = ?",
+                    currentVoice, existVoteId);
         }
         if (voiceForUpdate != 0) {
-            final String sql = "UPDATE Thread SET votes = votes + ? WHERE id = ?";
-            jdbcTemplate.update(sql, voiceForUpdate, threadId);
+            jdbcTemplate.update("UPDATE Thread SET votes = votes + ? WHERE id = ?",
+                    voiceForUpdate, threadId);
         }
     }
 
@@ -378,13 +376,11 @@ public class ThreadService {
         }
 
         if (slugOrId) {
-            final String sql = "SELECT votes, id, created, message, forum, title, author, slug, forumId from Thread WHERE id = ?";
-            return jdbcTemplate.queryForObject(
-                    sql, new Object[] {threadId}, ThreadRowMapper.INSTANCE);
+            return jdbcTemplate.queryForObject("SELECT votes, id, created, message, forum, title, author, slug, forumId from Thread WHERE id = ?",
+                    ThreadRowMapper.INSTANCE, threadId);
         } else {
-            final String sql = "SELECT votes, id, created, message, forum, title, author, slug, forumId from Thread WHERE slug::citext = ?::citext";
-            return jdbcTemplate.queryForObject(
-                    sql, new Object[] {slug_or_id}, ThreadRowMapper.INSTANCE);
+            return jdbcTemplate.queryForObject("SELECT votes, id, created, message, forum, title, author, slug, forumId from Thread WHERE slug::citext = ?::citext",
+                    ThreadRowMapper.INSTANCE, slug_or_id);
         }
     }
 }

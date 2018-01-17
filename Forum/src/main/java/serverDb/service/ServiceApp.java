@@ -17,8 +17,7 @@ public class ServiceApp {
 
     public ResponseEntity clearDatabase() {
 
-        final String sql = "TRUNCATE TABLE PathPosts, PostsThread, ForumUsers, Post, Vote, Thread, Forum, FUser RESTART IDENTITY";
-        jdbcTemplate.update(sql);
+        jdbcTemplate.update("TRUNCATE TABLE PathPosts, PostsThread, ForumUsers, Post, Vote, Thread, Forum, FUser RESTART IDENTITY");
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
@@ -28,18 +27,17 @@ public class ServiceApp {
         final ObjectMapper map = new ObjectMapper();
         final ObjectNode responseBody = map.createObjectNode();
 
-        String sql;
-        sql = "SELECT count(id) from Post";
-        responseBody.put("post", jdbcTemplate.queryForObject(sql, Integer.class));
+        responseBody.put("post", jdbcTemplate.queryForObject("SELECT count(id) from Post",
+                Integer.class));
 
-        sql = "SELECT count(slug) from Thread";
-        responseBody.put("thread", jdbcTemplate.queryForObject(sql, Integer.class));
+        responseBody.put("thread", jdbcTemplate.queryForObject("SELECT count(id) from Thread",
+                Integer.class));
 
-        sql = "SELECT count(slug) from Forum";
-        responseBody.put("forum", jdbcTemplate.queryForObject(sql, Integer.class));
+        responseBody.put("forum", jdbcTemplate.queryForObject("SELECT count(id) from Forum",
+                Integer.class));
 
-        sql = "SELECT count(id) from FUser";
-        responseBody.put("user", jdbcTemplate.queryForObject(sql, Integer.class));
+        responseBody.put("user", jdbcTemplate.queryForObject("SELECT count(id) from FUser",
+                Integer.class));
 
         return ResponseEntity.status(HttpStatus.OK).body(responseBody);
     }
