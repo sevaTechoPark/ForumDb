@@ -180,7 +180,6 @@ public class ThreadService {
         jdbcTemplate.update(sqlUpdate, posts.size(), thread.getForumId());
 
         if (ids.get(ids.size() - 1) == 1500000) {
-            System.out.println("VACUUM time");
             jdbcTemplate.execute("END TRANSACTION;"
                     + "DROP INDEX IF EXISTS vote_userId_threadId;"
                     + "VACUUM ANALYZE PathPosts;"

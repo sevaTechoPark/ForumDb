@@ -20,7 +20,8 @@ public class AppConfig {
         config.setMaximumPoolSize(8);
         config.setConnectionTimeout(3000);
         config.setValidationTimeout(250);
-
+        config.setLeakDetectionThreshold(8000);
+        
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
