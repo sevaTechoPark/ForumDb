@@ -19,7 +19,7 @@ public class AppConfig {
         config.setDriverClassName("org.postgresql.Driver");
         config.setMaximumPoolSize(8);
         config.setConnectionTimeout(250);
-        //config.setLeakDetectionThreshold(10);
+        config.setLeakDetectionThreshold(8);
         //config.setInitializationFailTimeout(3000);
         return new HikariDataSource(config);
     }

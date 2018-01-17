@@ -27,7 +27,7 @@ public class ThreadService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @Transactional
+//    @Transactional
     public ResponseEntity createPosts(String slug_or_id, List<Post> posts) throws SQLException {
 //      **************************************find thread**************************************
         Thread thread = findThread(slug_or_id, jdbcTemplate);
