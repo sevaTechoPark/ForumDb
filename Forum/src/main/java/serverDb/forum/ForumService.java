@@ -69,31 +69,25 @@ public class ForumService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
 
-        try {
-            final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum, userId, forumId) VALUES(?,?,?,?,?,?,?,?) RETURNING id";
-            int id = jdbcTemplate.queryForObject(sql, Integer.class, thread.getSlug(), thread.getTitle(), thread.getAuthor(),
-                    thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug(), user.getId(), forum.getId());
-            thread.setId(id);
-            thread.setForum(forum.getSlug());
+        final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum, userId, forumId) VALUES(?,?,?,?,?,?,?,?) RETURNING id";
+        int id = jdbcTemplate.queryForObject(sql, Integer.class, thread.getSlug(), thread.getTitle(), thread.getAuthor(),
+                thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug(), user.getId(), forum.getId());
+        thread.setId(id);
+        thread.setForum(forum.getSlug());
 
-        } catch (DuplicateKeyException e) {
-            throw new RuntimeException();
-        }
+        int forumId = forum.getId();
+        int userId = user.getId();
 
-        updateForum(forum.getId(), user.getId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(thread);
-    }
-
-    @Transactional
-    public void updateForum(int forumId, int userId) {
         String sqlUpdate = "UPDATE Forum SET threads = threads + 1 WHERE id = ?";
         jdbcTemplate.update(sqlUpdate, forumId);
 
         sqlUpdate = "INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) " +
                 "ON CONFLICT DO NOTHING";
         jdbcTemplate.update(sqlUpdate, userId, forumId);
-    }
 
+        return ResponseEntity.status(HttpStatus.CREATED).body(thread);
+    }
+    
     public ResponseEntity getForum(String slug) {
 
         Forum forum = findForum(slug, jdbcTemplate);

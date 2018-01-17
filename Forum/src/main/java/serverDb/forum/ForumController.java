@@ -1,5 +1,6 @@
 package serverDb.forum;
 
+import org.springframework.dao.DuplicateKeyException;
 import serverDb.thread.Thread;
 import static serverDb.thread.ThreadService.findThread;
 
@@ -34,7 +35,7 @@ public class ForumController {
     public ResponseEntity renameUser(@PathVariable("slug") String forum_slug, @RequestBody Thread thread) {
         try {
             return forumService.createThread(forum_slug, thread);
-        } catch (RuntimeException e) {
+        } catch (DuplicateKeyException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(findThread(thread.getSlug(), jdbcTemplate));
         }
 
