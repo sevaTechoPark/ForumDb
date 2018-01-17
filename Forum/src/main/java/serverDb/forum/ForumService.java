@@ -90,7 +90,7 @@ public class ForumService {
 //            sqlUpdate = "INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) " +
 //                    "ON CONFLICT DO NOTHING";
 //            jdbcTemplate.update(sqlUpdate, new Object[] {user.getId(), forum.getId()});
-            
+
         } catch (DuplicateKeyException e) {
 
             Thread duplicateThread = findThread(thread.getSlug(), jdbcTemplate);

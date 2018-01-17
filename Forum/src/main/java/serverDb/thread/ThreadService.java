@@ -188,15 +188,15 @@ public class ThreadService {
         if (ids.get(ids.size() - 1) == 1500000) {
             System.out.println("VACUUM time");
             jdbcTemplate.execute("END TRANSACTION;"
-                    + "DROP INDEX vote_userId_threadId;"
-                    + "VACUUM ANALYZE PathPosts;"
-                    + "VACUUM ANALYZE PostsThread;"
-                    + "VACUUM ANALYZE ForumUsers;"
-                    + "VACUUM ANALYZE Post;"
-                    + "VACUUM ANALYZE Thread;"
-                    + "VACUUM ANALYZE Forum;"
-                    + "VACUUM ANALYZE FUser;"
-                    + "REINDEX DATABASE docker;");
+                    + "DROP INDEX vote_userId_threadId;");
+//                    + "VACUUM ANALYZE PathPosts;"
+//                    + "VACUUM ANALYZE PostsThread;"
+//                    + "VACUUM ANALYZE ForumUsers;"
+//                    + "VACUUM ANALYZE Post;"
+//                    + "VACUUM ANALYZE Thread;"
+//                    + "VACUUM ANALYZE Forum;"
+//                    + "VACUUM ANALYZE FUser;"
+//                    + "REINDEX DATABASE docker;");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(posts);
     }
