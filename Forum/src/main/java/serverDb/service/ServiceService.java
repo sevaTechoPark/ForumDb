@@ -20,7 +20,7 @@ public class ServiceService {
 
     public ResponseEntity clearDatabase() {
 
-        final String sql = "TRUNCATE TABLE PathPosts, PostsThread, ForumUsers, Post, Vote, Thread, Forum, FUser";
+        final String sql = "TRUNCATE TABLE PathPosts, PostsThread, ForumUsers, Post, Vote, Thread, Forum, FUser RESTART IDENTITY";
         jdbcTemplate.update(sql);
 
         return new ResponseEntity<>(HttpStatus.OK);

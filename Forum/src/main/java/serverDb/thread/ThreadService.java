@@ -184,8 +184,11 @@ public class ThreadService {
 //          UPDATE COUNT OF POST
         String sqlUpdate = "UPDATE Forum SET posts = posts + ? WHERE id = ?";
         jdbcTemplate.update(sqlUpdate, posts.size(), thread.getForumId());
+
         if (ids.get(ids.size() - 1) == 1500000) {
+            System.out.println("VACUUM time");
             jdbcTemplate.execute("END TRANSACTION;"
+                    + "DROP INDEX vote_userId_threadId;"
                     + "VACUUM ANALYZE PathPosts;"
                     + "VACUUM ANALYZE PostsThread;"
                     + "VACUUM ANALYZE ForumUsers;"
@@ -256,41 +259,61 @@ public class ThreadService {
         int userId = user.getId();
 
         int voiceForUpdate = vote.getVoice();
+        int currentVoice = voiceForUpdate;
+        int existVoteId = -1;
+        boolean flag = false;
+        boolean flagInsert = false;
 
         try {   // user has voted
 
             final String sqlFindVote = "SELECT voice, id from Vote WHERE userId = ? AND threadId = ?";
              Vote existVote = jdbcTemplate.queryForObject(
                     sqlFindVote, new Object[]{userId, threadId}, VoteRowMapper.INSTANCE);
-            final int voice = existVote.getVoice();
-            if (vote.getVoice() == voice) { // his voice doesn't change
+            if (vote.getVoice() == existVote.getVoice()) { // his voice doesn't change
                 return ResponseEntity.status(HttpStatus.OK).body(thread);
 
             } else {    // voice changed.
-
-                final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE id = ?";
-                jdbcTemplate.update(sqlUpdateVote, voiceForUpdate, existVote.getId());
+                existVoteId = existVote.getId();
+                // final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE id = ?";
+                // jdbcTemplate.update(sqlUpdateVote, voiceForUpdate, existVote.getId());
                 voiceForUpdate = vote.getVoice() * 2;  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
+                flag = true;
             }
 
         } catch (EmptyResultDataAccessException e) {    // user hasn't voted
 
-            final String sqlInsertVote = "INSERT INTO Vote(userId, voice, threadId) VALUES(?,?,?)";
-
-            jdbcTemplate.update(sqlInsertVote, userId, vote.getVoice(), threadId);
+            flagInsert = true;
+            // final String sqlInsertVote = "INSERT INTO Vote(userId, voice, threadId) VALUES(?,?,?)";
+            // jdbcTemplate.update(sqlInsertVote, userId, vote.getVoice(), threadId);
 
         }
 
         if (voiceForUpdate != 0) {
-            int threadVoices = thread.getVotes() + voiceForUpdate;
+            // final String sql = "UPDATE Thread SET votes = votes + ? WHERE id = ?";
+            // jdbcTemplate.update(sql, voiceForUpdate, threadId);
 
-            final String sql = "UPDATE Thread SET votes = ? WHERE id = ?";
-            jdbcTemplate.update(sql, threadVoices, threadId); // update threads
-
-            thread.setVotes(threadVoices);
+            thread.setVotes(thread.getVotes() + voiceForUpdate);
         }
 
+        updateVoices(currentVoice, voiceForUpdate, existVoteId, threadId, userId, flag, flagInsert);
+
         return ResponseEntity.status(HttpStatus.OK).body(thread);
+    }
+
+    @Transactional
+    public void updateVoices(int currentVoice, int voiceForUpdate, int existVoteId, int threadId, int userId, boolean flag, boolean flagInsert) {
+        if (flagInsert) {
+            final String sqlInsertVote = "INSERT INTO Vote(userId, voice, threadId) VALUES(?,?,?)";
+            jdbcTemplate.update(sqlInsertVote, userId, currentVoice, threadId);
+        }
+        if (flag) {
+            final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE id = ?";
+            jdbcTemplate.update(sqlUpdateVote, currentVoice, existVoteId);
+        }
+        if (voiceForUpdate != 0) {
+            final String sql = "UPDATE Thread SET votes = votes + ? WHERE id = ?";
+            jdbcTemplate.update(sql, voiceForUpdate, threadId);
+        }
     }
 
     public ResponseEntity getThread(String slug_or_id) {

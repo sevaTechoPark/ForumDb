@@ -83,7 +83,7 @@ public class ForumService {
             thread.setId(id);
             thread.setForum(forum.getSlug());
 
-            updateForum(forum.getThreads() + 1, forum.getId(), user.getId());
+            updateForum(forum.getId(), user.getId());
 //            String sqlUpdate = "UPDATE Forum SET threads = ? WHERE id = ?";
 //            jdbcTemplate.update(sqlUpdate, forum.getThreads() + 1, forum.getId());
 //
@@ -101,9 +101,9 @@ public class ForumService {
     }
 
     @Transactional
-    public void updateForum(int threads, int forumId, int userId) {
-        String sqlUpdate = "UPDATE Forum SET threads = ? WHERE id = ?";
-        jdbcTemplate.update(sqlUpdate, new Object[] {threads, forumId});
+    public void updateForum(int forumId, int userId) {
+        String sqlUpdate = "UPDATE Forum SET threads = threads + 1 WHERE id = ?";
+        jdbcTemplate.update(sqlUpdate, new Object[] {forumId});
 
         sqlUpdate = "INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) " +
                 "ON CONFLICT DO NOTHING";

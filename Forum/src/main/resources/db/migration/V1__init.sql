@@ -68,6 +68,8 @@ CREATE TABLE Vote(
   FOREIGN KEY (threadId) REFERENCES Thread(id)
 );
 
+CREATE INDEX vote_userId_threadId ON Vote(userId, threadId);
+
 CREATE TABLE ForumUsers(
   userId int4,
   forumId int4,
