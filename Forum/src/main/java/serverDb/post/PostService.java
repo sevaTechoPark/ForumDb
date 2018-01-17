@@ -53,8 +53,7 @@ public class PostService {
         }
 
     }
-
-    @Transactional
+    
     public ResponseEntity getPost(int id, String[] related) {
 
         try {
