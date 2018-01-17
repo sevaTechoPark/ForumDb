@@ -188,7 +188,7 @@ public class ThreadService {
         if (ids.get(ids.size() - 1) == 1500000) {
             System.out.println("VACUUM time");
             jdbcTemplate.execute("END TRANSACTION;"
-                    + "DROP INDEX vote_userId_threadId;");
+                    + "DROP INDEX IF EXISTS vote_userId_threadId;");
 //                    + "VACUUM ANALYZE PathPosts;"
 //                    + "VACUUM ANALYZE PostsThread;"
 //                    + "VACUUM ANALYZE ForumUsers;"
@@ -375,6 +375,7 @@ public class ThreadService {
                     args.add(threadId);
                     args.add(since);
                     args.add(limit);
+                    // System.out.println(args);
                 } else if (since != null) {
                     sql.append(" AND path[1] IN (SELECT postId as id FROM PostsThread WHERE threadId = ?"
                             + " AND postId" + moreOrLess + "(SELECT path[1] FROM PathPosts where postId = ?)"

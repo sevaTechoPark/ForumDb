@@ -57,14 +57,14 @@ public class PostService {
     }
 
     public ResponseEntity getPost(int id, String[] related) {
-
+        System.out.println(related);
         try {
 
             final ObjectMapper map = new ObjectMapper();
             final ObjectNode responseBody = map.createObjectNode();
 
-            String sql = "SELECT author, created, forum, id, isEdited, message, parent, thread, forumId from Post WHERE id = ?";
-            Post post = jdbcTemplate.queryForObject(sql, new Object[] {id}, PostRowMapper.INSTANCE);
+            String sql = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE id = ?";
+            Post post = jdbcTemplate.queryForObject(sql, new Object[] {id}, serverDb.fasterMappers.PostRowMapper.INSTANCE);
 
             if (Arrays.asList(related).contains("only post")) {
                 return ResponseEntity.status(HttpStatus.OK).body(post);
@@ -74,9 +74,9 @@ public class PostService {
 
             if (Arrays.asList(related).contains("thread")) {
 
-                sql = "SELECT author, forum, id, message, slug, title, votes, created, forumId from Thread WHERE id = ?";
+                sql = "SELECT author, forum, id, message, slug, title, votes, created from Thread WHERE id = ?";
                 Thread thread = jdbcTemplate.queryForObject(sql, new Object[] {post.getThread()},
-                        ThreadRowMapper.INSTANCE);
+                        serverDb.fasterMappers.ThreadRowMapper.INSTANCE);
 
                 responseBody.set("thread", thread.getJson());
 
@@ -84,9 +84,9 @@ public class PostService {
 
             if (Arrays.asList(related).contains("user")) {
 
-                sql = "SELECT * from FUser WHERE nickname = ?";
+                sql = "SELECT nickname, fullname, about, email from FUser WHERE nickname = ?";
                 User user = jdbcTemplate.queryForObject(sql, new Object[] {post.getAuthor()},
-                        UserRowMapper.INSTANCE);
+                        serverDb.fasterMappers.UserRowMapper.INSTANCE);
 
                 responseBody.set("author", user.getJson());
 
@@ -94,9 +94,9 @@ public class PostService {
 
             if (Arrays.asList(related).contains("forum")) {
 
-                sql = "SELECT posts, slug, threads, title, \"user\", id from Forum WHERE id = ?";
+                sql = "SELECT posts, slug, threads, title, \"user\" from Forum WHERE id = ?";
                 Forum forum = jdbcTemplate.queryForObject(sql, new Object[] {post.getForumId()},
-                        ForumRowMapper.INSTANCE);
+                        serverDb.fasterMappers.ForumRowMapper.INSTANCE);
 
                 responseBody.set("forum", forum.getJson());
 
