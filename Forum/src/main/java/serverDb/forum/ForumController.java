@@ -1,13 +1,15 @@
 package serverDb.forum;
 
-import org.springframework.dao.DuplicateKeyException;
+import serverDb.error.Error;
 import serverDb.thread.Thread;
+import serverDb.thread.ThreadService;
 
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import serverDb.thread.ThreadService;
 
 import java.text.ParseException;
 
@@ -27,8 +29,16 @@ public class ForumController {
 
     @PostMapping(path = "/create")
     public ResponseEntity createUser(@RequestBody Forum forum) {
+        try {
+            return forumService.createForum(forum);
 
-       return forumService.createForum(forum);
+        } catch (DuplicateKeyException e) {
+
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(forumService.findForum(forum.getSlug()));
+
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+        }
     }
 
     @PostMapping(path = "/{slug}/create")

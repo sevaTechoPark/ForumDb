@@ -324,10 +324,9 @@ public class ThreadService {
         String descOrAsc = desc ? " DESC" : " ASC";
         String moreOrLess = desc ? " <" : " >";
 
-        final StringBuilder sql = new StringBuilder();
+        final StringBuilder sql = new StringBuilder("SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ?");
         final List<Object> args = new ArrayList<>(4);
 
-        sql.append("SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ?");
         args.add(threadId);
 
         final boolean sinceAndLimit = since != null && limit != null;

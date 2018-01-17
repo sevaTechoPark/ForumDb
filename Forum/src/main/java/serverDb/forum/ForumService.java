@@ -6,8 +6,6 @@ import serverDb.user.User;
 import serverDb.user.UserService;
 
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
@@ -20,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Transactional
 public class ForumService {
 
     @Autowired
@@ -30,34 +29,21 @@ public class ForumService {
 
     public ResponseEntity createForum(Forum forum) {
 
-        try {
-
-            User user = userService.findUser(forum.getUser());
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
-
-            }
-
-            forum.setUser(user.getNickname());
-
-            final String sql = "INSERT INTO Forum(slug, title, \"user\", userId) VALUES(?,?,?,?)";
-            jdbcTemplate.update(sql, forum.getSlug(), forum.getTitle(), forum.getUser(), user.getId());
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(forum);
-
-        } catch (DuplicateKeyException e) {
-
-            Forum duplicateForum = findForum(forum.getSlug());
-
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicateForum);
-
-
-        } catch (DataIntegrityViolationException e) {
+        User user = userService.findUser(forum.getUser());
+        if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+
         }
+
+        forum.setUser(user.getNickname());
+
+        final String sql = "INSERT INTO Forum(slug, title, \"user\", userId) VALUES(?,?,?,?)";
+        jdbcTemplate.update(sql, forum.getSlug(), forum.getTitle(), forum.getUser(), user.getId());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(forum);
+
     }
 
-    @Transactional
     public ResponseEntity createThread(String forum_slug, Thread thread) {
 
         User user = userService.findUser(thread.getAuthor());
@@ -103,35 +89,33 @@ public class ForumService {
 
     public ResponseEntity getThreads(String slug, Integer limit, String since, Boolean desc) throws ParseException {
 
-//      **************************************find forum**************************************
         Forum forum = findForum(slug);
         if (forum == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
-//      **************************************find forum**************************************
+
+        String descOrAsc = desc ? " DESC" : " ASC";
+        String moreOrLess = desc ? " <" : " >";
 
         final StringBuilder sql = new StringBuilder("SELECT author, created, forum, id, message, slug, title, votes from Thread WHERE forumId = ?");
         final List<Object> args = new ArrayList<>(3);
+
         args.add(forum.getId());
 
-        if (since != null) {
-            sql.append(" AND created");
-            if (desc == Boolean.TRUE) {
-                sql.append(" <");
-            } else {
-                sql.append(" >");
-            }
-
-            sql.append("= ?::timestamp with time zone");
+        if (since != null && limit != null) {
+            sql.append(" AND created" + moreOrLess + "= ?::timestamp with time zone"
+                    + " ORDER BY created" + descOrAsc + " LIMIT ?");
             args.add(since);
-        }
-        sql.append(" ORDER BY created");
-        if (desc == Boolean.TRUE) {
-            sql.append(" DESC");
-        }
-        if (limit != null) {
-            sql.append(" LIMIT ?");
             args.add(limit);
+        } else if (since != null) {
+            sql.append(" AND created" + moreOrLess + "= ?::timestamp with time zone"
+                    + " ORDER BY created" + descOrAsc);
+            args.add(since);
+        } else if (limit != null) {
+            sql.append(" ORDER BY created" + descOrAsc + " LIMIT ?");
+            args.add(limit);
+        } else {
+            sql.append(" ORDER BY created" + descOrAsc);
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(
@@ -141,39 +125,36 @@ public class ForumService {
 
     public ResponseEntity getUsers(String slug, Integer limit, String since, Boolean desc) {
 
-//      **************************************find forum**************************************
         Forum forum = findForum(slug);
         if (forum == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
-//      **************************************find forum**************************************
         final int id = forum.getId();
+
+        String descOrAsc = desc ? " DESC" : " ASC";
+        String moreOrLess = desc ? " <" : " >";
 
         final StringBuilder sql = new StringBuilder("SELECT nickname, fullname, about, email"
                 + " FROM ForumUsers JOIN FUser on(FUser.id = ForumUsers.userId) WHERE forumId = ?");
         final List<Object> args = new ArrayList<>();
         args.add(id);
 
-
-        if (since != null) {
-            sql.append(" AND nickname::citext");
-            if (desc == Boolean.TRUE) {
-                sql.append(" <");
-            } else {
-                sql.append(" >");
-            }
-
-            sql.append(" ?::citext");
-
+        if (since != null && limit != null) {
+            sql.append(" AND nickname::citext" + moreOrLess + " ?::citext ORDER BY nickname::citext" + descOrAsc
+                    + " LIMIT ?");
             args.add(since);
-        }
-        sql.append(" ORDER BY nickname::citext");
-        if (desc == Boolean.TRUE) {
-            sql.append(" DESC");
-        }
-        if (limit != null) {
-            sql.append(" LIMIT ?");
             args.add(limit);
+
+        } else if (since != null) {
+            sql.append(" AND nickname::citext" + moreOrLess + " ?::citext ORDER BY nickname::citext" + descOrAsc);
+            args.add(since);
+
+        } else if (limit != null) {
+            sql.append(" ORDER BY nickname::citext" + descOrAsc + " LIMIT ?");
+            args.add(limit);
+
+        } else {
+            sql.append(" ORDER BY nickname::citext" + descOrAsc);
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(
