@@ -228,11 +228,7 @@ public class ThreadService {
 
     public ResponseEntity voteThread(String slug_or_id, Vote vote) {
 
-        User user = userService.findUser(vote.getNickname());
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
-        }
-
+        User user = userService.getUser(vote.getNickname());
         Thread thread = getThread(slug_or_id);
 
         int threadId = thread.getId();

@@ -41,10 +41,6 @@ public class PostService {
 
         Post post = findPost(id);
 
-        if (Arrays.asList(related).contains("only post")) {
-            return ResponseEntity.status(HttpStatus.OK).body(post);
-        }
-
         responseBody.set("post", post.getJson());
 
         if (Arrays.asList(related).contains("thread")) {

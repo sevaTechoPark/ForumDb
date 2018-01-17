@@ -3,6 +3,7 @@ package serverDb.forum;
 import serverDb.thread.Thread;
 import serverDb.thread.ThreadService;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -32,10 +33,12 @@ public class ForumController {
             return forumService.createForum(forum);
 
         } catch (DuplicateKeyException e) {
-
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(forumService.findForum(forum.getSlug()));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(forumService.getForum(forum.getSlug()));
 
         } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
+
+        } catch (EmptyResultDataAccessException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
     }
@@ -46,14 +49,19 @@ public class ForumController {
             return forumService.createThread(forum_slug, thread);
         } catch (DuplicateKeyException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(threadService.getThread(thread.getSlug()));
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
     }
 
     @GetMapping(path = "/{slug}/details")
     public ResponseEntity getForum(@PathVariable("slug") String slug) {
-
-        return forumService.getForum(slug);
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(forumService.getForum(slug));
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
+        }
     }
 
     @GetMapping(path = "/{slug}/threads")
@@ -64,7 +72,12 @@ public class ForumController {
             desc = Boolean.FALSE;
         }
 
-        return forumService.getThreads(slug, limit, since, desc);
+        try {
+            return forumService.getThreads(slug, limit, since, desc);
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
+        }
+
     }
 
     @GetMapping(path = "/{slug}/users")
@@ -75,7 +88,10 @@ public class ForumController {
             desc = Boolean.FALSE;
         }
 
-        return forumService.getUsers(slug, limit, since, desc);
+        try {
+            return forumService.getUsers(slug, limit, since, desc);
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
+        }
     }
-
 }

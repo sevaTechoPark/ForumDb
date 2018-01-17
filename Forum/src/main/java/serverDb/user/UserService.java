@@ -1,7 +1,6 @@
 package serverDb.user;
 
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -34,10 +33,7 @@ public class UserService{
 
     public ResponseEntity renameUser(User user) {
 
-        User oldUser = findUser(user.getNickname());
-        if (oldUser == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
-        }
+        User oldUser = getUser(user.getNickname());
 
         if (user.getEmail() == null) {
             user.setEmail(oldUser.getEmail());
@@ -55,29 +51,11 @@ public class UserService{
         return ResponseEntity.status(HttpStatus.OK).body(user);
     }
 
-    public ResponseEntity getUser(String nickname) {
-        User user = findUser(nickname);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
+    public User getUser(String nickname) {
 
-        }
+        final String sql = "SELECT * from FUser WHERE  nickname::citext = ?::citext";
 
-        return ResponseEntity.status(HttpStatus.OK).body(user);
-    }
-
-    public User findUser(String nickname) {
-
-        try {
-
-            final String sql = "SELECT * from FUser WHERE  nickname::citext =  ?::citext";
-
-            return jdbcTemplate.queryForObject(
-                    sql, UserRowMapper.INSTANCE, nickname);
-
-        } catch (EmptyResultDataAccessException e) {
-
-            return null;
-        }
+        return jdbcTemplate.queryForObject(sql, UserRowMapper.INSTANCE, nickname);
     }
 }
 

@@ -2,6 +2,7 @@ package serverDb.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,13 +41,17 @@ public class UserController {
             return userService.renameUser(user);
         } catch (DuplicateKeyException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("{\"message\": \"\"}");
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
     }
 
     @GetMapping(path = "/{nickname}/profile")
     public ResponseEntity getUser(@PathVariable("nickname") String nickname) {
-
-        return userService.getUser(nickname);
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(userService.getUser(nickname));
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
+        }
     }
-
 }

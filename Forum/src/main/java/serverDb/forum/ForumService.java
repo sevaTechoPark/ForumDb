@@ -4,7 +4,6 @@ import serverDb.thread.Thread;
 import serverDb.user.User;
 import serverDb.user.UserService;
 
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
@@ -28,10 +27,7 @@ public class ForumService {
 
     public ResponseEntity createForum(Forum forum) {
 
-        User user = userService.findUser(forum.getUser());
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
-        }
+        User user = userService.getUser(forum.getUser());
 
         forum.setUser(user.getNickname());
 
@@ -44,17 +40,10 @@ public class ForumService {
 
     public ResponseEntity createThread(String forum_slug, Thread thread) {
 
-        User user = userService.findUser(thread.getAuthor());
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
-        }
+        User user = userService.getUser(thread.getAuthor());
+        Forum forum = getForum(forum_slug);
 
         thread.setAuthor(user.getNickname());
-
-        Forum forum = findForum(forum_slug);
-        if (forum == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
-        }
 
         final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum, userId, forumId) VALUES(?,?,?,?,?,?,?,?) RETURNING id";
         int id = jdbcTemplate.queryForObject(sql, Integer.class, thread.getSlug(), thread.getTitle(), thread.getAuthor(),
@@ -75,22 +64,9 @@ public class ForumService {
         return ResponseEntity.status(HttpStatus.CREATED).body(thread);
     }
 
-    public ResponseEntity getForum(String slug) {
-
-        Forum forum = findForum(slug);
-        if (forum == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(forum);
-    }
-
     public ResponseEntity getThreads(String slug, Integer limit, String since, Boolean desc) throws ParseException {
 
-        Forum forum = findForum(slug);
-        if (forum == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
-        }
+        Forum forum = getForum(slug);
 
         String descOrAsc = desc ? " DESC" : " ASC";
         String moreOrLess = desc ? " <" : " >";
@@ -123,10 +99,8 @@ public class ForumService {
 
     public ResponseEntity getUsers(String slug, Integer limit, String since, Boolean desc) {
 
-        Forum forum = findForum(slug);
-        if (forum == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
-        }
+        Forum forum = getForum(slug);
+
         final int id = forum.getId();
 
         String descOrAsc = desc ? " DESC" : " ASC";
@@ -160,19 +134,11 @@ public class ForumService {
         );
     }
 
-    public Forum findForum(String slug) {
+    public Forum getForum(String slug) {
 
-        try {
+        final String sql = "SELECT * from Forum WHERE slug::citext = ?::citext";
 
-            final String sql = "SELECT * from Forum WHERE slug::citext = ?::citext";
-
-            return jdbcTemplate.queryForObject(
-                    sql, ForumRowMapper.INSTANCE, slug);
-
-        } catch (EmptyResultDataAccessException e) {
-
-            return null;
-        }
+        return jdbcTemplate.queryForObject(sql, ForumRowMapper.INSTANCE, slug);
     }
 }
 
