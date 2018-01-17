@@ -27,7 +27,7 @@ public class ForumController {
     }
 
     @PostMapping(path = "/create")
-    public ResponseEntity createUser(@RequestBody Forum forum) {
+    public ResponseEntity createForum(@RequestBody Forum forum) {
         try {
             return forumService.createForum(forum);
 
@@ -41,11 +41,11 @@ public class ForumController {
     }
 
     @PostMapping(path = "/{slug}/create")
-    public ResponseEntity renameUser(@PathVariable("slug") String forum_slug, @RequestBody Thread thread) {
+    public ResponseEntity createThread(@PathVariable("slug") String forum_slug, @RequestBody Thread thread) {
         try {
             return forumService.createThread(forum_slug, thread);
         } catch (DuplicateKeyException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(threadService.findThread(thread.getSlug()));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(threadService.getThread(thread.getSlug()));
         }
 
     }

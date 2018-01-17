@@ -30,11 +30,8 @@ public class ThreadService {
 
     public ResponseEntity createPosts(String slug_or_id, List<Post> posts) throws SQLException {
 
-        Thread thread = findThread(slug_or_id);
-        if (thread == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
+        Thread thread = getThread(slug_or_id);
 
-        }
         if (posts.isEmpty()) {
             return ResponseEntity.status(HttpStatus.CREATED).body(posts);
         }
@@ -198,10 +195,7 @@ public class ThreadService {
 
     public ResponseEntity renameThread(String slug_or_id, Thread thread) {
 
-        Thread threadUpdated = findThread(slug_or_id);
-        if (threadUpdated == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
-        }
+        Thread threadUpdated = getThread(slug_or_id);
 
         if (thread.getMessage() == null) {
             thread.setMessage(threadUpdated.getMessage());
@@ -228,7 +222,6 @@ public class ThreadService {
         } catch (DataIntegrityViolationException e) {
 
             return ResponseEntity.status(HttpStatus.OK).body(threadUpdated);
-
         }
 
     }
@@ -240,10 +233,7 @@ public class ThreadService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
-        Thread thread = findThread(slug_or_id);
-        if (thread == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
-        }
+        Thread thread = getThread(slug_or_id);
 
         int threadId = thread.getId();
         int userId = user.getId();
@@ -299,25 +289,9 @@ public class ThreadService {
         }
     }
 
-    public ResponseEntity getThread(String slug_or_id) {
-
-        Thread thread = findThread(slug_or_id);
-        if (thread == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(thread);
-    }
-
     public ResponseEntity getPosts(String slug_or_id, Integer limit, Integer since, String sort, Boolean desc) {
 
-//      **************************************find thread**************************************
-        Thread thread = findThread(slug_or_id);
-        if (thread == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
-
-        }
-//      **************************************find thread**************************************
+        Thread thread = getThread(slug_or_id);
 
         int threadId = thread.getId();
         String descOrAsc = desc ? " DESC" : " ASC";
@@ -397,7 +371,7 @@ public class ThreadService {
         );
     }
 
-    public Thread findThread(String slug_or_id) {
+    public Thread getThread(String slug_or_id) {
 
         boolean slugOrId = false;
         int threadId = -1;
@@ -405,27 +379,17 @@ public class ThreadService {
             threadId = Integer.parseInt(slug_or_id);
             slugOrId = true;
         } catch (java.lang.NumberFormatException e ) {
-            //
         }
 
-        try {
-
-            String sql;
-            if (slugOrId) {
-                sql = "SELECT * from Thread WHERE id = ?";
-                return jdbcTemplate.queryForObject(
-                        sql, new Object[] {threadId}, ThreadRowMapper.INSTANCE);
-            } else {
-                sql = "SELECT * from Thread WHERE slug::citext = ?::citext";
-                return jdbcTemplate.queryForObject(
-                        sql, new Object[] {slug_or_id}, ThreadRowMapper.INSTANCE);
-            }
-
-        } catch (EmptyResultDataAccessException e) {
-
-            return null;
+        if (slugOrId) {
+            final String sql = "SELECT votes, id, created, message, forum, title, author, slug, forumId from Thread WHERE id = ?";
+            return jdbcTemplate.queryForObject(
+                    sql, new Object[] {threadId}, ThreadRowMapper.INSTANCE);
+        } else {
+            final String sql = "SELECT votes, id, created, message, forum, title, author, slug, forumId from Thread WHERE slug::citext = ?::citext";
+            return jdbcTemplate.queryForObject(
+                    sql, new Object[] {slug_or_id}, ThreadRowMapper.INSTANCE);
         }
     }
-
 }
 
