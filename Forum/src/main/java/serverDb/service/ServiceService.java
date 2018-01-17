@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ServiceService {
@@ -33,20 +34,16 @@ public class ServiceService {
 
         String sql;
         sql = "SELECT count(id) from Post";
-        final int post = jdbcTemplate.queryForObject(sql, Integer.class);
-        responseBody.put("post", post);
+        responseBody.put("post", jdbcTemplate.queryForObject(sql, Integer.class));
 
         sql = "SELECT count(slug) from Thread";
-        final int thread = jdbcTemplate.queryForObject(sql, Integer.class);
-        responseBody.put("thread", thread);
+        responseBody.put("thread", jdbcTemplate.queryForObject(sql, Integer.class));
 
         sql = "SELECT count(slug) from Forum";
-        final int forum = jdbcTemplate.queryForObject(sql, Integer.class);
-        responseBody.put("forum", forum);
+        responseBody.put("forum", jdbcTemplate.queryForObject(sql, Integer.class));
 
-        sql = "SELECT count(nickname) from FUser";
-        final int user = jdbcTemplate.queryForObject(sql, Integer.class);
-        responseBody.put("user", user);
+        sql = "SELECT count(id) from FUser";
+        responseBody.put("user", jdbcTemplate.queryForObject(sql, Integer.class));
 
         return ResponseEntity.status(HttpStatus.OK).body(responseBody);
     }

@@ -131,7 +131,7 @@ public class ForumService {
         }
 //      **************************************find forum**************************************
 
-        final StringBuilder sql = new StringBuilder("SELECT author, forum, id, message, slug, title, votes, created, forumId from Thread WHERE forumId = ?");
+        final StringBuilder sql = new StringBuilder("SELECT author, created, forum, id, message, slug, title, votes from Thread WHERE forumId = ?");
         final List<Object> args = new ArrayList<>();
         args.add(forum.getId());
 
@@ -156,7 +156,7 @@ public class ForumService {
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), ThreadRowMapper.INSTANCE)
+                jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), serverDb.fasterMappers.ThreadRowMapper.INSTANCE)
         );
     }
 
@@ -170,7 +170,7 @@ public class ForumService {
 //      **************************************find forum**************************************
         final int id = forum.getId();
 
-        final StringBuilder sql = new StringBuilder("SELECT nickname, fullname, about, email, FUser.id"
+        final StringBuilder sql = new StringBuilder("SELECT nickname, fullname, about, email"
                 + " FROM ForumUsers JOIN FUser on(FUser.id = ForumUsers.userId) WHERE forumId = ?");
         final List<Object> args = new ArrayList<>();
         args.add(id);
@@ -197,9 +197,8 @@ public class ForumService {
             args.add(limit);
         }
 
-
         return ResponseEntity.status(HttpStatus.OK).body(
-                jdbcTemplate.query(sql.toString(), args.toArray(), UserRowMapper.INSTANCE)
+                jdbcTemplate.query(sql.toString(), args.toArray(), serverDb.fasterMappers.UserRowMapper.INSTANCE)
         );
     }
 

@@ -343,11 +343,11 @@ public class ThreadService {
         final StringBuilder sql = new StringBuilder();
         final List<Object> args = new ArrayList<>();
 
+        sql.append("SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ?");
+        args.add(threadId);
+
         switch (sort) {
             case "tree":
-                sql.append("SELECT author, created, forum, id, isEdited, message, parent, thread, forumId from Post WHERE thread = ?");
-                args.add(threadId);
-
                 if (since != null) {
                     sql.append(" AND path");
                     sql.append(moreOrLess);
@@ -366,8 +366,6 @@ public class ThreadService {
                 }
                 break;
             case "parent_tree":
-                sql.append("SELECT author, created, forum, id, isEdited, message, parent, thread, forumId from Post WHERE thread = ?");
-                args.add(threadId);
                 if (since != null) {
                     sql.append(" AND path[1]");
                 }
@@ -400,8 +398,6 @@ public class ThreadService {
 
                 break;
             default:
-                sql.append("SELECT author, created, forum, id, isEdited, message, parent, thread, forumId from Post WHERE thread = ?");
-                args.add(threadId);
                 if (since != null) {
                     sql.append(" AND id");
                     sql.append(moreOrLess);
@@ -420,7 +416,7 @@ public class ThreadService {
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), PostRowMapper.INSTANCE)
+                jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), serverDb.fasterMappers.PostRowMapper.INSTANCE)
         );
     }
 
