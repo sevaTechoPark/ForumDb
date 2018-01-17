@@ -20,93 +20,75 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.util.Arrays;
 
 @Service
+@Transactional
 public class PostService {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public ResponseEntity editMessage(int id, Post post) {
+    public ResponseEntity editMessage(int id, Post post, String message) {
 
-        String message = post.getMessage();
-        ResponseEntity responseEntity = getPost(id, new String[]{"only post"});
-        if (responseEntity.getStatusCode() != HttpStatus.OK) {
-            return responseEntity;
-        }
-        post = (Post) responseEntity.getBody();
-
-        try {
-
-            if (message != null && !message.equals(post.getMessage())) {
-                final String sql = "UPDATE Post SET message = ?, isEdited = TRUE WHERE id = ?";
-                jdbcTemplate.update(sql, message, id);
-                post.setMessage(message);
-                post.setEdited(Boolean.TRUE);
-            }
-
-            return ResponseEntity.status(HttpStatus.OK).body(post);
-
-
-        } catch (DataIntegrityViolationException e) {
-
-            return ResponseEntity.status(HttpStatus.OK).body(post);
-
+        if (message != null && !message.equals(post.getMessage())) {
+            final String sql = "UPDATE Post SET message = ?, isEdited = TRUE WHERE id = ?";
+            jdbcTemplate.update(sql, message, id);
+            post.setMessage(message);
+            post.setEdited(Boolean.TRUE);
         }
 
+        return ResponseEntity.status(HttpStatus.OK).body(post);
     }
-    
+
     public ResponseEntity getPost(int id, String[] related) {
 
-        try {
+        final ObjectMapper map = new ObjectMapper();
+        final ObjectNode responseBody = map.createObjectNode();
 
-            final ObjectMapper map = new ObjectMapper();
-            final ObjectNode responseBody = map.createObjectNode();
+        Post post = findPost(id);
 
-            String sql = "SELECT author, created, forum, id, isEdited, message, parent, thread, forumId from Post WHERE id = ?";
-            Post post = jdbcTemplate.queryForObject(sql, PostRowMapper.INSTANCE, id);
-
-            if (Arrays.asList(related).contains("only post")) {
-                return ResponseEntity.status(HttpStatus.OK).body(post);
-            }
-
-            responseBody.set("post", post.getJson());
-
-            if (Arrays.asList(related).contains("thread")) {
-
-                sql = "SELECT author, forum, id, message, slug, title, votes, created from Thread WHERE id = ?";
-                Thread thread = jdbcTemplate.queryForObject(sql, serverDb.fasterMappers.ThreadRowMapper.INSTANCE,
-                        post.getThread());
-
-                responseBody.set("thread", thread.getJson());
-
-            }
-
-            if (Arrays.asList(related).contains("user")) {
-
-                sql = "SELECT nickname, fullname, about, email from FUser WHERE nickname = ?";
-                User user = jdbcTemplate.queryForObject(sql, serverDb.fasterMappers.UserRowMapper.INSTANCE,
-                        post.getAuthor());
-
-                responseBody.set("author", user.getJson());
-
-            }
-
-            if (Arrays.asList(related).contains("forum")) {
-
-                sql = "SELECT posts, slug, threads, title, \"user\" from Forum WHERE id = ?";
-                Forum forum = jdbcTemplate.queryForObject(sql, serverDb.fasterMappers.ForumRowMapper.INSTANCE,
-                        post.getForumId());
-
-                responseBody.set("forum", forum.getJson());
-
-            }
-
-            return ResponseEntity.status(HttpStatus.OK).body(responseBody);
-
-        } catch (EmptyResultDataAccessException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+        if (Arrays.asList(related).contains("only post")) {
+            return ResponseEntity.status(HttpStatus.OK).body(post);
         }
+
+        responseBody.set("post", post.getJson());
+
+        if (Arrays.asList(related).contains("thread")) {
+
+            final String sqlThread = "SELECT author, forum, id, message, slug, title, votes, created from Thread WHERE id = ?";
+            Thread thread = jdbcTemplate.queryForObject(sqlThread, serverDb.fasterMappers.ThreadRowMapper.INSTANCE,
+                    post.getThread());
+
+            responseBody.set("thread", thread.getJson());
+
+        }
+
+        if (Arrays.asList(related).contains("user")) {
+
+            final String sqlUser = "SELECT nickname, fullname, about, email from FUser WHERE nickname = ?";
+            User user = jdbcTemplate.queryForObject(sqlUser, serverDb.fasterMappers.UserRowMapper.INSTANCE,
+                    post.getAuthor());
+
+            responseBody.set("author", user.getJson());
+
+        }
+
+        if (Arrays.asList(related).contains("forum")) {
+
+            final String sqlForum = "SELECT posts, slug, threads, title, \"user\" from Forum WHERE id = ?";
+            Forum forum = jdbcTemplate.queryForObject(sqlForum, serverDb.fasterMappers.ForumRowMapper.INSTANCE,
+                    post.getForumId());
+
+            responseBody.set("forum", forum.getJson());
+
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseBody);
     }
 
+    public Post findPost(int id) {
+
+        String sql = "SELECT author, created, forum, id, isEdited, message, parent, thread, forumId from Post WHERE id = ?";
+        return jdbcTemplate.queryForObject(sql, PostRowMapper.INSTANCE, id);
+    }
 }
 
 

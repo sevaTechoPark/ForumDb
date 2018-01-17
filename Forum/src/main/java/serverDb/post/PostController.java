@@ -1,6 +1,11 @@
 package serverDb.post;
 
+import serverDb.error.Error;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +23,19 @@ public class PostController {
 
     @PostMapping(path = "/{id}/details")
     public ResponseEntity editMessage(@PathVariable("id") int id, @RequestBody Post post) {
+        String message = post.getMessage();
 
-        return postService.editMessage(id, post);
+        try {
+            post = postService.findPost(id);
+            return postService.editMessage(id, post, message);
+
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.OK).body(post);
+        }
+
     }
 
 
@@ -31,9 +47,11 @@ public class PostController {
             related = new String[0];
         }
 
-        return postService.getPost(id, related);
+        try {
+            return postService.getPost(id, related);
+
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
+        }
     }
-
-
-
 }
