@@ -2,7 +2,6 @@ package serverDb.thread;
 
 import serverDb.error.Error;
 import serverDb.post.Post;
-import serverDb.post.PostRowMapper;
 import serverDb.user.User;
 import serverDb.vote.Vote;
 import serverDb.vote.VoteRowMapper;
@@ -27,15 +26,13 @@ public class ThreadService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-//    @Transactional
     public ResponseEntity createPosts(String slug_or_id, List<Post> posts) throws SQLException {
-//      **************************************find thread**************************************
+
         Thread thread = findThread(slug_or_id, jdbcTemplate);
         if (thread == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
 
         }
-//      **************************************find thread**************************************
         if (posts.isEmpty()) {
             return ResponseEntity.status(HttpStatus.CREATED).body(posts);
         }
@@ -159,8 +156,6 @@ public class ThreadService {
             //
         }
 
-//        final List<Array> paths = jdbcTemplate.query("SELECT path FROM Post WHERE id >= ? AND id <= ? ORDER by id",
-//                new Object[]{ids.get(0), ids.get(ids.size() - 1)}, (resultSet, i) -> resultSet.getArray("path"));
         sql = "INSERT INTO PathPosts(postId, path) VALUES(?,(SELECT path FROM Post WHERE id = ?))";
         try(Connection connection = jdbcTemplate.getDataSource().getConnection();
             PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
@@ -168,7 +163,6 @@ public class ThreadService {
             for (int i = 0; i < ids.size(); i++) {
 
                 int id = ids.get(i);
-//                Array path = paths.get(i);
 
                 ps.setInt(1, id);
                 ps.setInt(2, id);
@@ -203,12 +197,11 @@ public class ThreadService {
 
     public ResponseEntity renameThread(String slug_or_id, Thread thread) {
 
-//      **************************************find thread**************************************
         Thread threadUpdated = findThread(slug_or_id, jdbcTemplate);
         if (threadUpdated == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
-//      **************************************find thread**************************************
+
         if (thread.getMessage() == null) {
             thread.setMessage(threadUpdated.getMessage());
         } else {
@@ -241,19 +234,15 @@ public class ThreadService {
 
     public ResponseEntity voteThread(String slug_or_id, Vote vote) {
 
-//      **************************************find user**************************************
         User user = findUser(vote.getNickname(), jdbcTemplate);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
-//      **************************************find user**************************************
 
-//      **********************************find thread**************************************
         Thread thread = findThread(slug_or_id, jdbcTemplate);
         if (thread == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
-//      **************************************find thread**************************************
 
         int threadId = thread.getId();
         int userId = user.getId();
@@ -268,14 +257,12 @@ public class ThreadService {
 
             final String sqlFindVote = "SELECT voice, id from Vote WHERE userId = ? AND threadId = ?";
              Vote existVote = jdbcTemplate.queryForObject(
-                    sqlFindVote, new Object[]{userId, threadId}, VoteRowMapper.INSTANCE);
+                    sqlFindVote, VoteRowMapper.INSTANCE, userId, threadId);
             if (vote.getVoice() == existVote.getVoice()) { // his voice doesn't change
                 return ResponseEntity.status(HttpStatus.OK).body(thread);
 
             } else {    // voice changed.
                 existVoteId = existVote.getId();
-                // final String sqlUpdateVote = "UPDATE Vote SET voice = ? WHERE id = ?";
-                // jdbcTemplate.update(sqlUpdateVote, voiceForUpdate, existVote.getId());
                 voiceForUpdate = vote.getVoice() * 2;  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
                 flag = true;
             }
@@ -283,14 +270,9 @@ public class ThreadService {
         } catch (EmptyResultDataAccessException e) {    // user hasn't voted
 
             flagInsert = true;
-            // final String sqlInsertVote = "INSERT INTO Vote(userId, voice, threadId) VALUES(?,?,?)";
-            // jdbcTemplate.update(sqlInsertVote, userId, vote.getVoice(), threadId);
-
         }
 
         if (voiceForUpdate != 0) {
-            // final String sql = "UPDATE Thread SET votes = votes + ? WHERE id = ?";
-            // jdbcTemplate.update(sql, voiceForUpdate, threadId);
 
             thread.setVotes(thread.getVotes() + voiceForUpdate);
         }

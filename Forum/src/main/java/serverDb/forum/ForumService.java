@@ -3,9 +3,7 @@ package serverDb.forum;
 import org.springframework.transaction.annotation.Transactional;
 import serverDb.error.Error;
 import serverDb.thread.Thread;
-import serverDb.thread.ThreadRowMapper;
 import serverDb.user.User;
-import serverDb.user.UserRowMapper;
 import static serverDb.thread.ThreadService.findThread;
 import static serverDb.user.UserService.findUser;
 
@@ -31,18 +29,16 @@ public class ForumService {
 
         try {
 
-//          **************************************find user**************************************
             User user = findUser(forum.getUser(), jdbcTemplate);
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
 
             }
-//          **************************************find user**************************************
 
             forum.setUser(user.getNickname());
 
             final String sql = "INSERT INTO Forum(slug, title, \"user\", userId) VALUES(?,?,?,?)";
-            jdbcTemplate.update(sql, new Object[] {forum.getSlug(), forum.getTitle(), forum.getUser(), user.getId()});
+            jdbcTemplate.update(sql, forum.getSlug(), forum.getTitle(), forum.getUser(), user.getId());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(forum);
 
@@ -60,42 +56,28 @@ public class ForumService {
 
     public ResponseEntity createThread(String forum_slug, Thread thread) {
 
-//      **************************************find user**************************************
         User user = findUser(thread.getAuthor(), jdbcTemplate);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
-//      **************************************find user**************************************
 
         thread.setAuthor(user.getNickname());
 
-//      **************************************find forum**************************************
         Forum forum = findForum(forum_slug, jdbcTemplate);
         if (forum == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Error.getJson(""));
         }
-//      **************************************find forum**************************************
 
         try {
             final String sql = "INSERT INTO Thread(slug, title, author, message, created, forum, userId, forumId) VALUES(?,?,?,?,?,?,?,?) RETURNING id";
-            int id = jdbcTemplate.queryForObject(sql, new Object[] {thread.getSlug(), thread.getTitle(), thread.getAuthor(),
-                    thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug(), user.getId(), forum.getId()}, Integer.class);
+            int id = jdbcTemplate.queryForObject(sql, Integer.class, thread.getSlug(), thread.getTitle(), thread.getAuthor(),
+                    thread.getMessage(), thread.getCreatedTimestamp(), forum.getSlug(), user.getId(), forum.getId());
             thread.setId(id);
             thread.setForum(forum.getSlug());
 
-
-//            String sqlUpdate = "UPDATE Forum SET threads = ? WHERE id = ?";
-//            jdbcTemplate.update(sqlUpdate, forum.getThreads() + 1, forum.getId());
-//
-//            sqlUpdate = "INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) " +
-//                    "ON CONFLICT DO NOTHING";
-//            jdbcTemplate.update(sqlUpdate, new Object[] {user.getId(), forum.getId()});
-
         } catch (DuplicateKeyException e) {
 
-            Thread duplicateThread = findThread(thread.getSlug(), jdbcTemplate);
-
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicateThread);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(findThread(thread.getSlug(), jdbcTemplate));
         }
 
         updateForum(forum.getId(), user.getId());
@@ -105,11 +87,11 @@ public class ForumService {
     @Transactional
     public void updateForum(int forumId, int userId) {
         String sqlUpdate = "UPDATE Forum SET threads = threads + 1 WHERE id = ?";
-        jdbcTemplate.update(sqlUpdate, new Object[] {forumId});
+        jdbcTemplate.update(sqlUpdate, forumId);
 
         sqlUpdate = "INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) " +
                 "ON CONFLICT DO NOTHING";
-        jdbcTemplate.update(sqlUpdate, new Object[] {userId, forumId});
+        jdbcTemplate.update(sqlUpdate, userId, forumId);
     }
 
     public ResponseEntity getForum(String slug) {
@@ -209,7 +191,7 @@ public class ForumService {
             final String sql = "SELECT * from Forum WHERE slug::citext = ?::citext";
 
             return jdbcTemplate.queryForObject(
-                    sql, new Object[] {slug}, ForumRowMapper.INSTANCE);
+                    sql, ForumRowMapper.INSTANCE, slug);
 
         } catch (Exception e) {
 
