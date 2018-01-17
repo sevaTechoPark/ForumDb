@@ -54,6 +54,7 @@ public class ForumService {
         }
     }
 
+    @Transactional
     public ResponseEntity createThread(String forum_slug, Thread thread) {
 
         User user = findUser(thread.getAuthor(), jdbcTemplate);
@@ -76,8 +77,7 @@ public class ForumService {
             thread.setForum(forum.getSlug());
 
         } catch (DuplicateKeyException e) {
-
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(findThread(thread.getSlug(), jdbcTemplate));
+            throw new RuntimeException();
         }
 
         updateForum(forum.getId(), user.getId());

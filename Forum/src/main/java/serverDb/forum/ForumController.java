@@ -1,7 +1,10 @@
 package serverDb.forum;
 
 import serverDb.thread.Thread;
+import static serverDb.thread.ThreadService.findThread;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +16,8 @@ import java.text.ParseException;
 public class ForumController {
 
     private ForumService forumService;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     public ForumController(ForumService forumService) {
@@ -27,8 +32,12 @@ public class ForumController {
 
     @PostMapping(path = "/{slug}/create")
     public ResponseEntity renameUser(@PathVariable("slug") String forum_slug, @RequestBody Thread thread) {
+        try {
+            return forumService.createThread(forum_slug, thread);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(findThread(thread.getSlug(), jdbcTemplate));
+        }
 
-        return forumService.createThread(forum_slug, thread);
     }
 
     @GetMapping(path = "/{slug}/details")
