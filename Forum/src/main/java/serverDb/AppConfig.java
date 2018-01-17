@@ -26,6 +26,7 @@ public class AppConfig {
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
         config.addDataSourceProperty("useServerPrepStmts", "true");
+//        config.addDataSourceProperty("tcpKeepAlive ", "true");
 
         return new HikariDataSource(config);
     }
