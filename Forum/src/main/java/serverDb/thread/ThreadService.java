@@ -346,73 +346,67 @@ public class ThreadService {
         sql.append("SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ?");
         args.add(threadId);
 
+        final boolean sinceAndLimit = since != null && limit != null;
+
         switch (sort) {
             case "tree":
-                if (since != null) {
-                    sql.append(" AND path");
-                    sql.append(moreOrLess);
-
-                    sql.append(" (SELECT path FROM PathPosts where postId = ?)");
+                if (sinceAndLimit) {
+                    sql.append(" AND path" + moreOrLess + " (SELECT path FROM PathPosts where postId = ?)"
+                            + " ORDER BY path" + descOrAsc + " LIMIT ?");
                     args.add(since);
-
-                }
-
-                sql.append(" ORDER BY path");
-                sql.append(descOrAsc);
-
-                if (limit != null) {
-                    sql.append(" LIMIT ?");
                     args.add(limit);
+                } else if (since != null) {
+                    sql.append(" AND path" + moreOrLess + " (SELECT path FROM PathPosts where postId = ?)"
+                            + " ORDER BY path" + descOrAsc);
+                    args.add(since);
+                } else if (limit != null) {
+                    sql.append("ORDER BY path" + descOrAsc + " LIMIT ?");
+                    args.add(limit);
+                } else {
+                    sql.append(" ORDER BY path" + descOrAsc);
                 }
+
                 break;
             case "parent_tree":
-                if (since != null) {
-                    sql.append(" AND path[1]");
-                }
-
-                if (limit != null) {
-                    if (since == null) {
-                        sql.append(" AND path[1]");
-                    }
-                    sql.append(" IN (SELECT postId as id FROM PostsThread WHERE threadId = ?");
+                if (sinceAndLimit) {
+                    sql.append(" AND path[1] IN (SELECT postId as id FROM PostsThread WHERE threadId = ?"
+                            + " AND postId" + moreOrLess + "(SELECT path[1] FROM PathPosts where postId = ?)"
+                            + "order by id" + descOrAsc + " LIMIT ?)  ORDER BY path" + descOrAsc);
                     args.add(threadId);
-                    if (since != null) {
-                        sql.append(" AND postId");
-                    }
-                }
-
-                if (since != null) {
-                    sql.append(moreOrLess);
-
-                    sql.append(" (SELECT path[1] FROM PathPosts where postId = ?)");
                     args.add(since);
-                }
-
-                if (limit != null) {
-                    sql.append(" order by id " + descOrAsc +" LIMIT ?)");
                     args.add(limit);
+                } else if (since != null) {
+                    sql.append(" AND path[1] IN (SELECT postId as id FROM PostsThread WHERE threadId = ?"
+                            + " AND postId" + moreOrLess + "(SELECT path[1] FROM PathPosts where postId = ?)"
+                            + "order by id" + descOrAsc + ")  ORDER BY path" + descOrAsc);
+                    args.add(threadId);
+                    args.add(since);
+                } else if (limit != null) {
+                    sql.append(" AND path[1] IN (SELECT postId as id FROM PostsThread WHERE threadId = ?"
+                            + "order by id " + descOrAsc + " LIMIT ?)  ORDER BY path" + descOrAsc);
+                    args.add(threadId);
+                    args.add(limit);
+                } else {
+                    sql.append(" ORDER BY path" + descOrAsc);
                 }
-
-                sql.append(" ORDER BY path");
-                sql.append(descOrAsc);
 
                 break;
             default:
-                if (since != null) {
-                    sql.append(" AND id");
-                    sql.append(moreOrLess);
-                    sql.append(" ?");
+                if (sinceAndLimit) {
+                    sql.append(" AND id" + moreOrLess + " ?"
+                            + " ORDER BY id" + descOrAsc
+                            + " LIMIT ?");
                     args.add(since);
-                }
-
-                sql.append(" ORDER BY id");
-                sql.append(descOrAsc);
-
-                if (limit != null) {
-                    sql.append(" LIMIT ?");
                     args.add(limit);
+                } else if (since != null) {
+                    sql.append(" AND id" + moreOrLess + " ? ORDER BY id" + descOrAsc);
+                    args.add(since);
+                } else if (limit != null) {
+                    sql.append("ORDER BY id" + descOrAsc + " LIMIT ?");
+                    args.add(limit);
+                } else {
+                    sql.append(" ORDER BY id" + descOrAsc);
                 }
-
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(
