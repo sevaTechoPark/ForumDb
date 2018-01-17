@@ -41,4 +41,4 @@ RUN mvn package
 
 EXPOSE 5000
 
-CMD service postgresql start && java -Xmx300M -XX:+UseSerialGC -Xss512k -XX:CICompilerCount=1 -XX:-TieredCompilation -jar target/Forum-1.0-SNAPSHOT.jar
+CMD service postgresql start && java -Xmx300M -XX:+UseSerialGC -Xss128k -XX:CICompilerCount=1 -XX:-TieredCompilation -jar target/Forum-1.0-SNAPSHOT.jar
