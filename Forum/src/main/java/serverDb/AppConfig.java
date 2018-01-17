@@ -19,7 +19,7 @@ public class AppConfig {
         config.setDriverClassName("org.postgresql.Driver");
         config.setMaximumPoolSize(8);
         config.setConnectionTimeout(3000);
-        config.setLeakDetectionThreshold(2000);
+        config.setLeakDetectionThreshold(4000);
         config.setValidationTimeout(250);
 
         config.addDataSourceProperty("cachePrepStmts", "true");
