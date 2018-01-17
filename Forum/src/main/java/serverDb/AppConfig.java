@@ -18,9 +18,15 @@ public class AppConfig {
         config.setPassword("docker");
         config.setDriverClassName("org.postgresql.Driver");
         config.setMaximumPoolSize(8);
-        config.setConnectionTimeout(250);
-        config.setLeakDetectionThreshold(8);
-        //config.setInitializationFailTimeout(3000);
+        config.setConnectionTimeout(3000);
+        config.setLeakDetectionThreshold(2000);
+        config.setValidationTimeout(250);
+
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "250");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        config.addDataSourceProperty("useServerPrepStmts", "true");
+
         return new HikariDataSource(config);
     }
 }
