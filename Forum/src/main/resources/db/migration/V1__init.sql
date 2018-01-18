@@ -58,6 +58,7 @@ CREATE INDEX post_thread_path ON Post(thread, path);
 CREATE INDEX post_thread_path1 ON Post(thread, (path[1]));
 CREATE INDEX post_id_path ON Post(id, path);
 CREATE INDEX post_id_path1 ON Post(id, (path[1]));
+CREATE INDEX posts_thread_id ON Post(thread, id) WHERE parent = 0;
 
 CREATE TABLE Vote(
   id SERIAL4 PRIMARY KEY,
@@ -77,12 +78,3 @@ CREATE TABLE ForumUsers(
   FOREIGN KEY (userId) REFERENCES FUser(id),
   FOREIGN KEY (forumId) REFERENCES Forum(id)
 );
-
-CREATE TABLE PostsThread(
-  postId int4,
-  threadId int4,
-  FOREIGN KEY (postId) REFERENCES Post(id),
-  FOREIGN KEY (threadId) REFERENCES Thread(id)
-);
-
-CREATE INDEX postsThread_thread_parent ON PostsThread(threadId, postId);
