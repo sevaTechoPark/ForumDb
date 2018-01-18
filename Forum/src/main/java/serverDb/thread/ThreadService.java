@@ -78,7 +78,7 @@ public class ThreadService {
         Timestamp created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
         final List<Integer> ids = jdbcTemplate.query("SELECT nextval('post_id_seq') FROM generate_series(1, ?)", new Object[]{posts.size()}, (rs, rowNum) -> rs.getInt(1));
         sql = "INSERT INTO Post(author, message, parent, thread, forum, forumId, created, id, path) VALUES(?,?,?,?,?,?,?,?," +
-                " (SELECT path FROM PathPosts WHERE postId = ?) || ?)";
+                " (SELECT path FROM Post WHERE id = ?) || ?)";
 
         try(Connection connection = jdbcTemplate.getDataSource().getConnection();
             PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
@@ -154,25 +154,6 @@ public class ThreadService {
             //
         }
 
-        sql = "INSERT INTO PathPosts(postId, path) VALUES(?,(SELECT path FROM Post WHERE id = ?))";
-        try(Connection connection = jdbcTemplate.getDataSource().getConnection();
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
-
-            for (int i = 0; i < ids.size(); i++) {
-
-                int id = ids.get(i);
-
-                ps.setInt(1, id);
-                ps.setInt(2, id);
-
-                ps.addBatch();
-            }
-            ps.executeBatch();
-
-        } catch (BatchUpdateException e) {
-            //
-        }
-
 //          UPDATE COUNT OF POST
         String sqlUpdate = "UPDATE Forum SET posts = posts + ? WHERE id = ?";
         jdbcTemplate.update(sqlUpdate, posts.size(), thread.getForumId());
@@ -180,7 +161,6 @@ public class ThreadService {
         if (ids.get(ids.size() - 1) == 1500000) {
             jdbcTemplate.execute("END TRANSACTION;"
                     + "DROP INDEX IF EXISTS vote_userId_threadId;"
-                    + "VACUUM ANALYZE PathPosts;"
                     + "VACUUM ANALYZE PostsThread;"
                     + "VACUUM ANALYZE ForumUsers;"
                     + "VACUUM ANALYZE Post;"
@@ -301,12 +281,12 @@ public class ThreadService {
         switch (sort) {
             case "tree":
                 if (sinceAndLimit) {
-                    sql.append(" AND path" + moreOrLess + " (SELECT path FROM PathPosts where postId = ?)"
+                    sql.append(" AND path" + moreOrLess + " (SELECT path FROM Post where id = ?)"
                             + " ORDER BY path" + descOrAsc + " LIMIT ?");
                     args.add(since);
                     args.add(limit);
                 } else if (since != null) {
-                    sql.append(" AND path" + moreOrLess + " (SELECT path FROM PathPosts where postId = ?)"
+                    sql.append(" AND path" + moreOrLess + " (SELECT path FROM Post where id = ?)"
                             + " ORDER BY path" + descOrAsc);
                     args.add(since);
                 } else if (limit != null) {
@@ -320,15 +300,15 @@ public class ThreadService {
             case "parent_tree":
                 if (sinceAndLimit) {
                     sql.append(" AND path[1] IN (SELECT postId as id FROM PostsThread WHERE threadId = ?"
-                            + " AND postId" + moreOrLess + "(SELECT path[1] FROM PathPosts where postId = ?)"
+                            + " AND postId" + moreOrLess + "(SELECT path[1] FROM Post where id = ?)"
                             + "order by id" + descOrAsc + " LIMIT ?)  ORDER BY path" + descOrAsc);
                     args.add(threadId);
                     args.add(since);
                     args.add(limit);
-                    // System.out.println(args);
+
                 } else if (since != null) {
                     sql.append(" AND path[1] IN (SELECT postId as id FROM PostsThread WHERE threadId = ?"
-                            + " AND postId" + moreOrLess + "(SELECT path[1] FROM PathPosts where postId = ?)"
+                            + " AND postId" + moreOrLess + "(SELECT path[1] FROM Post where id = ?)"
                             + "order by id" + descOrAsc + ")  ORDER BY path" + descOrAsc);
                     args.add(threadId);
                     args.add(since);
