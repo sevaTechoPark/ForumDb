@@ -246,65 +246,72 @@ public class ThreadService {
         Thread thread = getThread(slug_or_id);
 
         int threadId = thread.getId();
-        String descOrAsc = desc ? " DESC" : " ASC";
+        String descOrAsc = desc ? " DESC" : " ";
         String moreOrLess = desc ? " <" : " >";
 
-        final StringBuilder sql = new StringBuilder("SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ?");
+        final StringBuilder sql = new StringBuilder();
         final List<Object> args = new ArrayList<>(4);
-
-        args.add(threadId);
 
         final boolean sinceAndLimit = since != null && limit != null;
 
         switch (sort) {
             case "tree":
+                sql.append("SELECT p1.author, p1.created, p1.forum, p1.id, p1.isEdited, p1.message, p1.parent, p1.thread FROM Post p1");
                 if (sinceAndLimit) {
-                    sql.append(" AND path" + moreOrLess + " (SELECT path FROM Post where id = ?)"
-                            + " ORDER BY path" + descOrAsc + " LIMIT ?");
+                    sql.append(" LEFT JOIN Post p2 on(p2.id = ?)"
+                            + "WHERE p1.thread = ? AND p1.path" + moreOrLess + "p2.path"
+                            + " ORDER BY p1.path" + descOrAsc + " LIMIT ?");
                     args.add(since);
+                    args.add(threadId);
                     args.add(limit);
                 } else if (since != null) {
-                    sql.append(" AND path" + moreOrLess + " (SELECT path FROM Post where id = ?)"
-                            + " ORDER BY path" + descOrAsc);
+                    sql.append(" LEFT JOIN Post p2 on(p2.id = ?)"
+                            + "WHERE p1.thread = ? AND p1.path" + moreOrLess + "p2.path"
+                            + " ORDER BY p1.path" + descOrAsc);
                     args.add(since);
+                    args.add(threadId);
                 } else if (limit != null) {
-                    sql.append("ORDER BY path" + descOrAsc + " LIMIT ?");
+                    sql.append(" WHERE p1.thread = ? ORDER BY p1.path" + descOrAsc + " LIMIT ?");
+                    args.add(threadId);
                     args.add(limit);
                 } else {
-                    sql.append(" ORDER BY path" + descOrAsc);
+                    sql.append(" WHERE p1.thread = ? ORDER BY p1.path" + descOrAsc);
+                    args.add(threadId);
                 }
 
                 break;
             case "parent_tree":
+                sql.append("SELECT p1.author, p1.created, p1.forum, p1.id, p1.isEdited, p1.message, p1.parent, p1.thread FROM Post p1");
                 if (sinceAndLimit) {
-                    sql.append(" AND path[1] IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
-                            + " AND id" + moreOrLess + "(SELECT path[1] FROM Post where id = ?)"
-                            + "order by id" + descOrAsc + " LIMIT ?)  ORDER BY path" + descOrAsc);
-                    args.add(threadId);
+                    sql.append(" JOIN (SELECT p2.id FROM Post p2 LEFT JOIN Post p3 on(p3.id = ?) WHERE p2.thread = ? AND p2.parent = 0 AND p2.id" + moreOrLess + " p3.path[1] ORDER BY p2.id" + descOrAsc + " LIMIT ?) as p"
+                            + " on(p1.path[1] = p.id AND p1.thread = ?) ORDER BY p1.path" + descOrAsc);
                     args.add(since);
+                    args.add(threadId);
                     args.add(limit);
-                    
+                    args.add(threadId);
                 } else if (since != null) {
-                    sql.append(" AND path[1] IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
-                            + " AND id" + moreOrLess + "(SELECT path[1] FROM Post where id = ?)"
-                            + "order by id" + descOrAsc + ")  ORDER BY path" + descOrAsc);
-                    args.add(threadId);
+                    sql.append(" LEFT JOIN Post p3 on(p3.id = ?) LEFT JOIN Post p2 on(p1.path[1] = p2.id AND p1.thread = ?)"
+                            + "WHERE p2.id" + moreOrLess + " p3.path[1] AND p2.thread = ? AND p2.parent = 0"
+                            + " ORDER BY p1.path" + descOrAsc);
                     args.add(since);
+                    args.add(threadId);
+                    args.add(threadId);
                 } else if (limit != null) {
-                    sql.append(" AND path[1] IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
-                            + "order by id " + descOrAsc + " LIMIT ?)  ORDER BY path" + descOrAsc);
+                    sql.append(" JOIN (SELECT id FROM Post WHERE thread = ? AND parent = 0 ORDER BY id" + descOrAsc + " LIMIT ?) as p"
+                            + " on(p1.path[1] = p.id AND p1.thread = ?) ORDER BY p1.path" + descOrAsc);
                     args.add(threadId);
                     args.add(limit);
+                    args.add(threadId);
                 } else {
-                    sql.append(" ORDER BY path" + descOrAsc);
+                    sql.append(" WHERE p1.thread = ? ORDER BY p1.path" + descOrAsc);
                 }
 
                 break;
             default:
+                sql.append("SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ?");
+                args.add(threadId);
                 if (sinceAndLimit) {
-                    sql.append(" AND id" + moreOrLess + " ?"
-                            + " ORDER BY id" + descOrAsc
-                            + " LIMIT ?");
+                    sql.append(" AND id" + moreOrLess + " ?" + " ORDER BY id" + descOrAsc + " LIMIT ?");
                     args.add(since);
                     args.add(limit);
                 } else if (since != null) {
