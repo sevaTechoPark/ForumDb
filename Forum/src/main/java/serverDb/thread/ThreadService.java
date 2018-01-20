@@ -290,9 +290,11 @@ public class ThreadService {
                     args.add(limit);
                     args.add(threadId);
                 } else if (since != null) {
-                    sql.append(" LEFT JOIN Post p3 on(p3.id = ?) LEFT JOIN Post p2 on(p1.path[1] = p2.id AND p1.thread = ?)"
-                            + "WHERE p2.id" + moreOrLess + " p3.path[1] AND p2.thread = ? AND p2.parent = 0"
-                            + " ORDER BY p1.path" + descOrAsc);
+//                    sql.append(" LEFT JOIN Post p3 on(p3.id = ?) LEFT JOIN Post p2 on(p1.path[1] = p2.id AND p1.thread = ?)"
+//                            + "WHERE p2.id" + moreOrLess + " p3.path[1] AND p2.thread = ? AND p2.parent = 0"
+//                            + " ORDER BY p1.path" + descOrAsc);
+                    sql.append(" JOIN (SELECT p2.id FROM Post p2 LEFT JOIN Post p3 on(p3.id = ?) WHERE p2.thread = ? AND p2.parent = 0 AND p2.id" + moreOrLess + " p3.path[1]) as p"
+                            + " on(p1.path[1] = p.id AND p1.thread = ?) ORDER BY p1.path" + descOrAsc);
                     args.add(since);
                     args.add(threadId);
                     args.add(threadId);
