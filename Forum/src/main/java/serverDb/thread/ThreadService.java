@@ -75,8 +75,8 @@ public class ThreadService {
 
         Timestamp created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
         final List<Integer> ids = jdbcTemplate.query("SELECT nextval('post_id_seq') FROM generate_series(1, ?)", new Object[]{posts.size()}, (rs, rowNum) -> rs.getInt(1));
-        sql = "INSERT INTO Post(author, message, parent, thread, forum, forumId, created, id, path) VALUES(?,?,?,?,?,?,?,?," +
-                " (SELECT path FROM Post WHERE id = ?) || ?)";
+        sql = "INSERT INTO Post(author, message, parent, thread, forum, forumId, created, id, path, parentPath) VALUES(?,?,?,?,?,?,?,?," +
+                " (SELECT path FROM Post WHERE id = ?) || ?, (SELECT COALESCE((SELECT path[1] FROM Post  where id = ?), ?)))";
 
         try(Connection connection = jdbcTemplate.getDataSource().getConnection();
             PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
@@ -94,11 +94,14 @@ public class ThreadService {
                 ps.setTimestamp(7, created);
                 ps.setInt(8, id);
                 if (post.getParent() != 0) {
-                    ps.setLong(9, post.getParent());
+                    ps.setInt(9, post.getParent());
+                    ps.setInt(11, post.getParent());
                 } else {
-                    ps.setLong(9, id);
+                    ps.setInt(9, id);
+                    ps.setInt(11, id);
                 }
                 ps.setInt(10, id);
+                ps.setInt(12, id);
 
                 post.setForum(forumSlug);
                 post.setCreated(created);
@@ -283,24 +286,26 @@ public class ThreadService {
             case "parent_tree":
                 sql.append("SELECT p1.author, p1.created, p1.forum, p1.id, p1.isEdited, p1.message, p1.parent, p1.thread FROM Post p1");
                 if (sinceAndLimit) {
-                    sql.append(" JOIN (SELECT p2.id FROM Post p2 LEFT JOIN Post p3 on(p3.id = ?) WHERE p2.thread = ? AND p2.parent = 0 AND p2.id" + moreOrLess + " p3.path[1] ORDER BY p2.id" + descOrAsc + " LIMIT ?) as p"
-                            + " on(p1.path[1] = p.id AND p1.thread = ?) ORDER BY p1.path" + descOrAsc);
+                    sql.append(" JOIN (SELECT p2.id FROM Post p2 LEFT JOIN Post p3 on(p3.id = ?) WHERE p2.thread = ? AND p2.parent = 0 AND p2.id" + moreOrLess + " p3.parentPath ORDER BY p2.id" + descOrAsc + " LIMIT ?) as p"
+                            + " on(p1.parentPath = p.id AND p1.thread = ?) ORDER BY p1.path" + descOrAsc);
                     args.add(since);
                     args.add(threadId);
                     args.add(limit);
                     args.add(threadId);
+//                    System.out.println(sql.toString());
+//                    System.out.println(args);
                 } else if (since != null) {
 //                    sql.append(" LEFT JOIN Post p3 on(p3.id = ?) LEFT JOIN Post p2 on(p1.path[1] = p2.id AND p1.thread = ?)"
 //                            + "WHERE p2.id" + moreOrLess + " p3.path[1] AND p2.thread = ? AND p2.parent = 0"
 //                            + " ORDER BY p1.path" + descOrAsc);
-                    sql.append(" JOIN (SELECT p2.id FROM Post p2 LEFT JOIN Post p3 on(p3.id = ?) WHERE p2.thread = ? AND p2.parent = 0 AND p2.id" + moreOrLess + " p3.path[1]) as p"
-                            + " on(p1.path[1] = p.id AND p1.thread = ?) ORDER BY p1.path" + descOrAsc);
+                    sql.append(" JOIN (SELECT p2.id FROM Post p2 LEFT JOIN Post p3 on(p3.id = ?) WHERE p2.thread = ? AND p2.parent = 0 AND p2.id" + moreOrLess + " p3.parentPath) as p"
+                            + " on(p1.parentPath = p.id AND p1.thread = ?) ORDER BY p1.path" + descOrAsc);
                     args.add(since);
                     args.add(threadId);
                     args.add(threadId);
                 } else if (limit != null) {
                     sql.append(" JOIN (SELECT id FROM Post WHERE thread = ? AND parent = 0 ORDER BY id" + descOrAsc + " LIMIT ?) as p"
-                            + " on(p1.path[1] = p.id AND p1.thread = ?) ORDER BY p1.path" + descOrAsc);
+                            + " on(p1.parentPath = p.id AND p1.thread = ?) ORDER BY p1.path" + descOrAsc);
                     args.add(threadId);
                     args.add(limit);
                     args.add(threadId);

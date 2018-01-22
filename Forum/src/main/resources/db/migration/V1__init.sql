@@ -48,6 +48,7 @@ CREATE TABLE Post(
   message text NOT NULL,
   path int4[] NOT NULL,
   parent INT4 NOT NULL DEFAULT 0,
+  parentPath int4 NOT NULL,
   FOREIGN KEY (author) REFERENCES FUser(nickname),
   FOREIGN KEY (thread) REFERENCES Thread(id),
   FOREIGN KEY (forumId) REFERENCES Forum(id)
@@ -60,8 +61,8 @@ CREATE INDEX post_id_path ON Post(id, path);
 CREATE INDEX post_thread_path ON Post(thread, path);
 -- parent_tree
 CREATE INDEX posts_thread_id_parentEQ0 ON Post(thread, id) WHERE parent = 0;
-CREATE INDEX post_thread_path1 ON Post(thread, (path[1]));
-CREATE INDEX post_id_path1 ON Post(id, (path[1]));
+CREATE INDEX post_thread_parentPath ON Post(thread, parentPath);
+CREATE INDEX post_id_parentPath ON Post(id, parentPath);
 
 CREATE TABLE Vote(
   id SERIAL4 PRIMARY KEY,
