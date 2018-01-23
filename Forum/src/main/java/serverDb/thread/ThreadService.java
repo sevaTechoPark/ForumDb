@@ -75,8 +75,8 @@ public class ThreadService {
 
         Timestamp created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
         final List<Integer> ids = jdbcTemplate.query("SELECT nextval('post_id_seq') FROM generate_series(1, ?)", new Object[]{posts.size()}, (rs, rowNum) -> rs.getInt(1));
-        sql = "INSERT INTO Post(author, message, parent, thread, forum, forumId, created, id, path) VALUES(?,?,?,?,?,?,?,?," +
-                " (SELECT path FROM Post WHERE id = ?) || ?)";
+        sql = "INSERT INTO Post(author, message, parent, thread, forum, forumId, created, id, path, path1) VALUES(?,?,?,?,?,?,?,?," +
+                " (SELECT path FROM Post WHERE id = ?) || ?, (SELECT COALESCE((SELECT path[1] FROM Post WHERE id = ?),?)))";
 
         try(Connection connection = jdbcTemplate.getDataSource().getConnection();
             PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
@@ -95,10 +95,13 @@ public class ThreadService {
                 ps.setInt(8, id);
                 if (post.getParent() != 0) {
                     ps.setLong(9, post.getParent());
+                    ps.setLong(11, post.getParent());
                 } else {
                     ps.setLong(9, id);
+                    ps.setLong(11, id);
                 }
                 ps.setInt(10, id);
+                ps.setInt(12, id);
 
                 post.setForum(forumSlug);
                 post.setCreated(created);
@@ -277,21 +280,21 @@ public class ThreadService {
                 break;
             case "parent_tree":
                 if (sinceAndLimit) {
-                    sql.append(" AND path[1] IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
-                            + " AND id" + moreOrLess + "(SELECT path[1] FROM Post where id = ?)"
+                    sql.append(" AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
+                            + " AND id" + moreOrLess + "(SELECT path1 FROM Post where id = ?)"
                             + "order by id" + descOrAsc + " LIMIT ?)  ORDER BY path" + descOrAsc);
                     args.add(threadId);
                     args.add(since);
                     args.add(limit);
                     
                 } else if (since != null) {
-                    sql.append(" AND path[1] IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
-                            + " AND id" + moreOrLess + "(SELECT path[1] FROM Post where id = ?)"
+                    sql.append(" AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
+                            + " AND id" + moreOrLess + "(SELECT path1 FROM Post where id = ?)"
                             + "order by id" + descOrAsc + ")  ORDER BY path" + descOrAsc);
                     args.add(threadId);
                     args.add(since);
                 } else if (limit != null) {
-                    sql.append(" AND path[1] IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
+                    sql.append(" AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
                             + "order by id " + descOrAsc + " LIMIT ?)  ORDER BY path" + descOrAsc);
                     args.add(threadId);
                     args.add(limit);
