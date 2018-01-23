@@ -77,8 +77,12 @@ CREATE INDEX vote_userId_threadId ON Vote(userId, threadId);
 
 CREATE TABLE ForumUsers(
   userId int4,
-  forumId int4,
-  CONSTRAINT c_userId_forumId UNIQUE (userId, forumId),
-  FOREIGN KEY (userId) REFERENCES FUser(id),
-  FOREIGN KEY (forumId) REFERENCES Forum(id)
+  nickname citext COLLATE "ucs_basic",
+  email text,
+  fullname text,
+  about text,
+  forumId int4
 );
+
+CREATE UNIQUE INDEX forumUsers_userId_forumId ON ForumUsers(userId, forumId);
+CREATE INDEX forumUsers_forumId_nickname ON ForumUsers(forumId, nickname);

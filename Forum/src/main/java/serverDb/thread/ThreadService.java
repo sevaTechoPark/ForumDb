@@ -54,9 +54,7 @@ public class ThreadService {
         } finally {
             // may be in current posts will be parent post
 
-            for (int i = 0; i < posts.size(); i++) {
-                Post post = posts.get(i);
-
+            for (Post post : posts) {
                 if (post.getParent() == 0) {
                     flag = true;
                 }
@@ -116,17 +114,15 @@ public class ThreadService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
-        sql = "INSERT INTO ForumUsers(userId, forumId) VALUES( (SELECT id FROM FUser WHERE nickname = ?), ?) " +
-                "ON CONFLICT DO NOTHING";
+
+        sql = "INSERT INTO ForumUsers(userId, nickname, email, fullname, about, forumId) (SELECT id, nickname, email, fullname, about, ? FROM FUser WHERE nickname = ?) ON CONFLICT DO NOTHING";
         try(Connection connection = jdbcTemplate.getDataSource().getConnection();
             PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
 
-            for (int i = 0; i < withoutDublicate.size(); i++) {
+            for (String author : withoutDublicate) {
 
-                String author = withoutDublicate.get(i);
-
-                ps.setString(1, author);
-                ps.setInt(2, forumId);
+                ps.setInt(1, forumId);
+                ps.setString(2, author);
 
                 ps.addBatch();
             }
@@ -135,7 +131,6 @@ public class ThreadService {
         } catch (BatchUpdateException e) {
             //
         }
-
 //          UPDATE COUNT OF POST
         String sqlUpdate = "UPDATE Forum SET posts = posts + ? WHERE id = ?";
         jdbcTemplate.update(sqlUpdate, posts.size(), thread.getForumId());
@@ -143,6 +138,7 @@ public class ThreadService {
         if (ids.get(ids.size() - 1) == 1500000) {
             jdbcTemplate.execute("END TRANSACTION;"
                     + "DROP INDEX IF EXISTS vote_userId_threadId;"
+                    + "DROP INDEX IF EXISTS forumUsers_userId_forumId;"
                     + "VACUUM ANALYZE ForumUsers;"
                     + "VACUUM ANALYZE Post;"
                     + "VACUUM ANALYZE Thread;"

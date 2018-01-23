@@ -53,8 +53,8 @@ public class ForumService {
         int forumId = forum.getId();
 
         jdbcTemplate.update("UPDATE Forum SET threads = threads + 1 WHERE id = ?", forumId);
-        jdbcTemplate.update("INSERT INTO ForumUsers(userId, forumId) VALUES(?,?) ON CONFLICT DO NOTHING",
-                user.getId(), forumId);
+        jdbcTemplate.update("INSERT INTO ForumUsers(userId, nickname, email, fullname, about, forumId) VALUES(?,?,?,?,?,?) ON CONFLICT DO NOTHING",
+                user.getId(), user.getNickname(), user.getEmail(), user.getFullname(), user.getAbout(), forumId);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(thread);
     }
@@ -101,8 +101,7 @@ public class ForumService {
         String descOrAsc = desc ? " DESC" : " ASC";
         String moreOrLess = desc ? " <" : " >";
 
-        final StringBuilder sql = new StringBuilder("SELECT nickname, fullname, about, email"
-                + " FROM ForumUsers JOIN FUser on(FUser.id = ForumUsers.userId) WHERE forumId = ?");
+        final StringBuilder sql = new StringBuilder("SELECT nickname, fullname, about, email FROM ForumUsers WHERE forumId = ?");
         final List<Object> args = new ArrayList<>();
         args.add(id);
 
@@ -111,7 +110,6 @@ public class ForumService {
                     + " LIMIT ?");
             args.add(since);
             args.add(limit);
-
         } else if (since != null) {
             sql.append(" AND nickname::citext" + moreOrLess + " ?::citext ORDER BY nickname::citext" + descOrAsc);
             args.add(since);
