@@ -167,14 +167,9 @@ public class ThreadService {
 
         if (ids.get(ids.size() - 1) == 1500000) {
             jdbcTemplate.execute("END TRANSACTION;"
-                    + "DROP INDEX IF EXISTS vote_userId_threadId;"
                     + "DROP INDEX IF EXISTS forumUsers_userId_forumId;"
-                    + "VACUUM ANALYZE ForumUsers;"
-                    + "VACUUM ANALYZE Post;"
-                    + "VACUUM ANALYZE Thread;"
-                    + "VACUUM ANALYZE Forum;"
-                    + "VACUUM ANALYZE FUser;"
-                    + "REINDEX DATABASE docker;");
+                    + "DROP TABLE IF EXISTS Vote;"
+                    + "VACUUM ANALYZE;");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(posts);
     }
