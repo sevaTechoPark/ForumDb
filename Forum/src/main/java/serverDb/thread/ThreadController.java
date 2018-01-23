@@ -1,6 +1,8 @@
 package serverDb.thread;
 
 import serverDb.post.Post;
+import serverDb.user.User;
+import serverDb.user.UserService;
 import serverDb.vote.Vote;
 
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -17,10 +19,12 @@ import java.util.List;
 public class ThreadController {
 
     private ThreadService threadService;
+    private UserService userService;
 
     @Autowired
     public ThreadController(ThreadService threadService) {
         this.threadService = threadService;
+        this.userService = userService;
     }
 
     @PostMapping(path = "/{slug_or_id}/create")
@@ -47,7 +51,8 @@ public class ThreadController {
     @PostMapping(path = "/{slug_or_id}/vote")
     public ResponseEntity voteThread(@PathVariable("slug_or_id") String slug_or_id, @RequestBody Vote vote) {
         try {
-            return threadService.voteThread(slug_or_id, vote);
+            User user = userService.getUser(vote.getNickname());
+            return threadService.voteThread(slug_or_id, vote, user.getId());
 
         } catch (EmptyResultDataAccessException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");

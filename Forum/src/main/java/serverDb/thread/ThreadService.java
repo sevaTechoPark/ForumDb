@@ -55,9 +55,6 @@ public class ThreadService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @Autowired
-    private UserService userService;
-
     public ResponseEntity createPosts(String slug_or_id, List<Post> posts) throws SQLException {
 
         Thread thread = getThread(slug_or_id);
@@ -169,6 +166,7 @@ public class ThreadService {
             jdbcTemplate.execute("END TRANSACTION;"
                     + "DROP INDEX IF EXISTS forumUsers_userId_forumId;"
                     + "DROP TABLE IF EXISTS Vote;"
+                    + "REINDEX DATABASE docker;"
                     + "VACUUM ANALYZE;");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(posts);
@@ -207,13 +205,11 @@ public class ThreadService {
 
     }
 
-    public ResponseEntity voteThread(String slug_or_id, Vote vote) {
+    public ResponseEntity voteThread(String slug_or_id, Vote vote, int userId) {
 
-        User user = userService.getUser(vote.getNickname());
         Thread thread = getThread(slug_or_id);
 
         int threadId = thread.getId();
-        int userId = user.getId();
 
         int voiceForUpdate = vote.getVoice();
         int currentVoice = voiceForUpdate;
