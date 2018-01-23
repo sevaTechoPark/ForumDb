@@ -289,7 +289,7 @@ public class ThreadService {
                     args.add(since);
                     args.add(limit);
                 } else if (since != null) {
-                    sql = desc ? treeSinceDesc : treeLimit;
+                    sql = desc ? treeSinceDesc : treeSince;
                     args.add(since);
                 } else if (limit != null) {
                     sql = desc ? treeLimitDesc : treeLimit;
