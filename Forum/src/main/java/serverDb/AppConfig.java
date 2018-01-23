@@ -13,7 +13,7 @@ public class AppConfig {
     @Bean
     public DataSource dataSource() throws SQLException {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:postgresql://localhost:5432/docker");
+        config.setJdbcUrl("jdbc:postgresql://localhost:5432/docker?host=/var/run/postgresql/");
         config.setUsername("docker");
         config.setPassword("docker");
         config.setDriverClassName("org.postgresql.Driver");
@@ -25,7 +25,6 @@ public class AppConfig {
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
         config.addDataSourceProperty("useServerPrepStmts", "true");
-//        config.addDataSourceProperty("tcpKeepAlive ", "true");
 
         return new HikariDataSource(config);
     }
