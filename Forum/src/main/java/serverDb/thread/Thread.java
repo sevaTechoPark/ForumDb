@@ -44,13 +44,14 @@ public class Thread {
 
     }
 
+    @JsonIgnore
     public int getForumId() {
         return forumId;
     }
 
     public int getId() {
         return id;
-    }   // bug tests
+    }
 
     public String getAuthor() {
         return author;

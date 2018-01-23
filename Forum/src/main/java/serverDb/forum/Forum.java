@@ -12,7 +12,7 @@ public class Forum {
     private String title;
     private String slug;
     private int threads;
-    private long posts;
+    private int posts;
     private int id;
 
     @JsonCreator
@@ -49,7 +49,7 @@ public class Forum {
         return threads;
     }
 
-    public long getPosts() {
+    public int getPosts() {
         return posts;
     }
 
@@ -73,7 +73,7 @@ public class Forum {
         this.threads = threads;
     }
 
-    public void setPosts(long posts) {
+    public void setPosts(int posts) {
         this.posts = posts;
     }
 
@@ -87,7 +87,6 @@ public class Forum {
         node.put("slug", this.slug);
         node.put("threads", this.threads);
         node.put("posts", this.posts);
-
 
         return node;
     }

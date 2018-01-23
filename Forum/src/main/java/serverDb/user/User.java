@@ -27,7 +27,8 @@ public class User {
     public User() {
 
     }
-    
+
+    @JsonIgnore
     public int getId() {
         return id;
     }

@@ -34,6 +34,7 @@ public class Post {
 
     }
 
+    @JsonIgnore
     public int getForumId() {
         return forumId;
     }
