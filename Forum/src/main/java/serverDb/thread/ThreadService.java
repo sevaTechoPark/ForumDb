@@ -22,6 +22,36 @@ import java.util.*;
 @Service
 public class ThreadService {
 
+    final String flatSinceLimit = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? AND id > ? ORDER BY id LIMIT ?";
+    final String flatSince = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? AND id > ? ORDER BY id";
+    final String flatLimit = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? ORDER BY id LIMIT ?";
+    final String flat = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? ORDER BY id";
+
+    final String treeSinceLimit = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? AND path > (SELECT path FROM Post where id = ?) ORDER BY path LIMIT ?";
+    final String treeSince = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? AND  path > (SELECT path FROM Post where id = ?) ORDER BY path";
+    final String treeLimit = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? ORDER BY path LIMIT ?";
+    final String tree = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? ORDER BY path";
+
+    final String parentTreeSinceLimit = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ? AND id > (SELECT path1 FROM Post where id = ?) order by id LIMIT ?) ORDER BY path";
+    final String parentTreeSince = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ? AND id > (SELECT path1 FROM Post where id = ?)) ORDER BY path";
+    final String parentTreeLimit = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ? order by id LIMIT ?) ORDER BY path";
+    final String parentTree = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? ORDER BY path";
+
+    final String flatSinceLimitDesc = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? AND id < ? ORDER BY id DESC LIMIT ?";
+    final String flatSinceDesc = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? AND id < ? ORDER BY id DESC";
+    final String flatLimitDesc = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? ORDER BY id DESC LIMIT ?";
+    final String flatDesc = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? ORDER BY id DESC";
+
+    final String treeSinceLimitDesc = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? AND path < (SELECT path FROM Post where id = ?) ORDER BY path DESC LIMIT ?";
+    final String treeSinceDesc = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? AND  path < (SELECT path FROM Post where id = ?) ORDER BY path DESC";
+    final String treeLimitDesc = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? ORDER BY path DESC LIMIT ?";
+    final String treeDesc = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? ORDER BY path DESC";
+
+    final String parentTreeSinceLimitDesc = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ? AND id < (SELECT path1 FROM Post where id = ?) order by id DESC LIMIT ?) ORDER BY path DESC";
+    final String parentTreeSinceDesc = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ? AND id < (SELECT path1 FROM Post where id = ?)) ORDER BY path DESC";
+    final String parentTreeLimitDesc = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ? order by id DESC LIMIT ?) ORDER BY path DESC";
+    final String parentTreeDesc = "SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ? ORDER BY path DESC";
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
@@ -92,11 +122,11 @@ public class ThreadService {
                 ps.setTimestamp(7, created);
                 ps.setInt(8, id);
                 if (post.getParent() != 0) {
-                    ps.setLong(9, post.getParent());
-                    ps.setLong(11, post.getParent());
+                    ps.setInt(9, post.getParent());
+                    ps.setInt(11, post.getParent());
                 } else {
-                    ps.setLong(9, id);
-                    ps.setLong(11, id);
+                    ps.setInt(9, id);
+                    ps.setInt(11, id);
                 }
                 ps.setInt(10, id);
                 ps.setInt(12, id);
@@ -245,10 +275,8 @@ public class ThreadService {
         Thread thread = getThread(slug_or_id);
 
         int threadId = thread.getId();
-        String descOrAsc = desc ? " DESC" : " ASC";
-        String moreOrLess = desc ? " <" : " >";
 
-        final StringBuilder sql = new StringBuilder("SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ?");
+        String sql;
         final List<Object> args = new ArrayList<>(4);
 
         args.add(threadId);
@@ -258,67 +286,57 @@ public class ThreadService {
         switch (sort) {
             case "tree":
                 if (sinceAndLimit) {
-                    sql.append(" AND path" + moreOrLess + " (SELECT path FROM Post where id = ?)"
-                            + " ORDER BY path" + descOrAsc + " LIMIT ?");
+                    sql = desc ? treeSinceLimitDesc : treeSinceLimit;
                     args.add(since);
                     args.add(limit);
                 } else if (since != null) {
-                    sql.append(" AND path" + moreOrLess + " (SELECT path FROM Post where id = ?)"
-                            + " ORDER BY path" + descOrAsc);
+                    sql = desc ? treeSinceDesc : treeLimit;
                     args.add(since);
                 } else if (limit != null) {
-                    sql.append("ORDER BY path" + descOrAsc + " LIMIT ?");
+                    sql = desc ? treeLimitDesc : treeLimit;
                     args.add(limit);
                 } else {
-                    sql.append(" ORDER BY path" + descOrAsc);
+                    sql = desc ? treeDesc : tree;
                 }
-
                 break;
             case "parent_tree":
                 if (sinceAndLimit) {
-                    sql.append(" AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
-                            + " AND id" + moreOrLess + "(SELECT path1 FROM Post where id = ?)"
-                            + "order by id" + descOrAsc + " LIMIT ?)  ORDER BY path" + descOrAsc);
+                    sql = desc ? parentTreeSinceLimitDesc : parentTreeSinceLimit;
                     args.add(threadId);
                     args.add(since);
                     args.add(limit);
 
                 } else if (since != null) {
-                    sql.append(" AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
-                            + " AND id" + moreOrLess + "(SELECT path1 FROM Post where id = ?)"
-                            + "order by id" + descOrAsc + ")  ORDER BY path" + descOrAsc);
+                    sql = desc ? parentTreeSinceDesc : parentTreeSince;
                     args.add(threadId);
                     args.add(since);
                 } else if (limit != null) {
-                    sql.append(" AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
-                            + "order by id " + descOrAsc + " LIMIT ?)  ORDER BY path" + descOrAsc);
+                    sql = desc ? parentTreeLimitDesc : parentTreeLimit;
                     args.add(threadId);
                     args.add(limit);
                 } else {
-                    sql.append(" ORDER BY path" + descOrAsc);
+                    sql = desc ? parentTreeDesc : parentTree;
                 }
 
                 break;
             default:
                 if (sinceAndLimit) {
-                    sql.append(" AND id" + moreOrLess + " ?"
-                            + " ORDER BY id" + descOrAsc
-                            + " LIMIT ?");
+                    sql = desc ? flatSinceLimitDesc : flatSinceLimit;
                     args.add(since);
                     args.add(limit);
                 } else if (since != null) {
-                    sql.append(" AND id" + moreOrLess + " ? ORDER BY id" + descOrAsc);
+                    sql = desc ? flatSinceDesc : flatSince;
                     args.add(since);
                 } else if (limit != null) {
-                    sql.append("ORDER BY id" + descOrAsc + " LIMIT ?");
+                    sql = desc ? flatLimitDesc : flatLimit;
                     args.add(limit);
                 } else {
-                    sql.append(" ORDER BY id" + descOrAsc);
+                    sql = desc ? flatDesc : flat;
                 }
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                jdbcTemplate.query(sql.toString(), args.toArray(new Object[args.size()]), serverDb.fasterMappers.PostRowMapper.INSTANCE)
+                jdbcTemplate.query(sql, args.toArray(new Object[args.size()]), serverDb.fasterMappers.PostRowMapper.INSTANCE)
         );
     }
 
