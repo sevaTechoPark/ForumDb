@@ -22,7 +22,7 @@ public class ThreadController {
     private UserService userService;
 
     @Autowired
-    public ThreadController(ThreadService threadService) {
+    public ThreadController(ThreadService threadService, UserService userService) {
         this.threadService = threadService;
         this.userService = userService;
     }
@@ -52,7 +52,7 @@ public class ThreadController {
     public ResponseEntity voteThread(@PathVariable("slug_or_id") String slug_or_id, @RequestBody Vote vote) {
         try {
             User user = userService.getUser(vote.getNickname());
-            return threadService.voteThread(slug_or_id, vote, user.getId());
+            return threadService.voteThread(slug_or_id, vote.getVoice(), user.getId());
 
         } catch (EmptyResultDataAccessException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");

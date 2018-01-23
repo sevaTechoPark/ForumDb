@@ -205,14 +205,13 @@ public class ThreadService {
 
     }
 
-    public ResponseEntity voteThread(String slug_or_id, Vote vote, int userId) {
+    public ResponseEntity voteThread(String slug_or_id, int currentVoice, int userId) {
 
         Thread thread = getThread(slug_or_id);
 
         int threadId = thread.getId();
 
-        int voiceForUpdate = vote.getVoice();
-        int currentVoice = voiceForUpdate;
+        int voiceForUpdate = currentVoice;
         int existVoteId = -1;
         boolean flag = false;
         boolean flagInsert = false;
@@ -221,12 +220,12 @@ public class ThreadService {
 
              Vote existVote = jdbcTemplate.queryForObject("SELECT voice, id from Vote WHERE userId = ? AND threadId = ?",
                      VoteRowMapper.INSTANCE, userId, threadId);
-            if (vote.getVoice() == existVote.getVoice()) { // his voice doesn't change
+            if (currentVoice == existVote.getVoice()) { // his voice doesn't change
                 return ResponseEntity.status(HttpStatus.OK).body(thread);
 
             } else {    // voice changed.
                 existVoteId = existVote.getId();
-                voiceForUpdate = vote.getVoice() * 2;  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
+                voiceForUpdate = currentVoice * 2;  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
                 flag = true;
             }
 
