@@ -167,6 +167,7 @@ public class ThreadService {
                     + "DROP INDEX IF EXISTS forumUsers_userId_forumId;"
                     + "DROP TABLE IF EXISTS Vote;"
                     + "REINDEX DATABASE docker;"
+                    + "CLUSTER Thread USING thread_forumId_created;"
                     + "VACUUM ANALYZE;");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(posts);
