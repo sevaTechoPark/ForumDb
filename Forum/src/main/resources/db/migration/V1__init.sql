@@ -35,7 +35,7 @@ CREATE TABLE Thread(
   FOREIGN KEY (forumId) REFERENCES Forum(id)
 );
 
-CREATE INDEX thread_forum_created ON Thread(forumId, created);
+CREATE INDEX thread_forumId_created ON Thread(forumId, created);
 
 CREATE TABLE Post(
   id SERIAL4 PRIMARY KEY,
@@ -48,21 +48,21 @@ CREATE TABLE Post(
   message text NOT NULL,
   path int4[] NOT NULL,
   parent INT4 NOT NULL DEFAULT 0,
-  parentPath int4 NOT NULL,
+  path1 INT4 NOT NULL,
   FOREIGN KEY (author) REFERENCES FUser(nickname),
   FOREIGN KEY (thread) REFERENCES Thread(id),
   FOREIGN KEY (forumId) REFERENCES Forum(id)
 );
 
 -- flat
-CREATE INDEX post_thread_id ON Post(thread, id);
--- tree
 CREATE INDEX post_id_path ON Post(id, path);
+-- tree
+CREATE INDEX post_thread_id ON Post(thread, id);
 CREATE INDEX post_thread_path ON Post(thread, path);
 -- parent_tree
-CREATE INDEX posts_thread_id_parentEQ0 ON Post(thread, id) WHERE parent = 0;
-CREATE INDEX post_thread_parentPath ON Post(thread, parentPath);
-CREATE INDEX post_id_parentPath ON Post(id, parentPath);
+CREATE INDEX post_thread_path1 ON Post(thread, path1);
+CREATE INDEX post_id_path1 ON Post(id, path1);
+CREATE INDEX posts_thread_id ON Post(thread, id) WHERE parent = 0;
 
 CREATE TABLE Vote(
   id SERIAL4 PRIMARY KEY,
@@ -77,8 +77,12 @@ CREATE INDEX vote_userId_threadId ON Vote(userId, threadId);
 
 CREATE TABLE ForumUsers(
   userId int4,
-  forumId int4,
-  CONSTRAINT c_userId_forumId UNIQUE (userId, forumId),
-  FOREIGN KEY (userId) REFERENCES FUser(id),
-  FOREIGN KEY (forumId) REFERENCES Forum(id)
+  nickname citext COLLATE "ucs_basic",
+  email text,
+  fullname text,
+  about text,
+  forumId int4
 );
+
+CREATE UNIQUE INDEX forumUsers_userId_forumId ON ForumUsers(userId, forumId);
+CREATE INDEX forumUsers_forumId_nickname ON ForumUsers(forumId, nickname);

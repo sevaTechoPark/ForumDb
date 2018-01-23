@@ -54,9 +54,7 @@ public class ThreadService {
         } finally {
             // may be in current posts will be parent post
 
-            for (int i = 0; i < posts.size(); i++) {
-                Post post = posts.get(i);
-
+            for (Post post : posts) {
                 if (post.getParent() == 0) {
                     flag = true;
                 }
@@ -75,8 +73,8 @@ public class ThreadService {
 
         Timestamp created = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
         final List<Integer> ids = jdbcTemplate.query("SELECT nextval('post_id_seq') FROM generate_series(1, ?)", new Object[]{posts.size()}, (rs, rowNum) -> rs.getInt(1));
-        sql = "INSERT INTO Post(author, message, parent, thread, forum, forumId, created, id, path, parentPath) VALUES(?,?,?,?,?,?,?,?," +
-                " (SELECT path FROM Post WHERE id = ?) || ?, (SELECT COALESCE((SELECT path[1] FROM Post  where id = ?), ?)))";
+        sql = "INSERT INTO Post(author, message, parent, thread, forum, forumId, created, id, path, path1) VALUES(?,?,?,?,?,?,?,?," +
+                " (SELECT path FROM Post WHERE id = ?) || ?, (SELECT COALESCE((SELECT path[1] FROM Post WHERE id = ?),?)))";
 
         try(Connection connection = jdbcTemplate.getDataSource().getConnection();
             PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
@@ -94,11 +92,11 @@ public class ThreadService {
                 ps.setTimestamp(7, created);
                 ps.setInt(8, id);
                 if (post.getParent() != 0) {
-                    ps.setInt(9, post.getParent());
-                    ps.setInt(11, post.getParent());
+                    ps.setLong(9, post.getParent());
+                    ps.setLong(11, post.getParent());
                 } else {
-                    ps.setInt(9, id);
-                    ps.setInt(11, id);
+                    ps.setLong(9, id);
+                    ps.setLong(11, id);
                 }
                 ps.setInt(10, id);
                 ps.setInt(12, id);
@@ -116,17 +114,15 @@ public class ThreadService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
-        sql = "INSERT INTO ForumUsers(userId, forumId) VALUES( (SELECT id FROM FUser WHERE nickname = ?), ?) " +
-                "ON CONFLICT DO NOTHING";
+
+        sql = "INSERT INTO ForumUsers(userId, nickname, email, fullname, about, forumId) (SELECT id, nickname, email, fullname, about, ? FROM FUser WHERE nickname = ?) ON CONFLICT DO NOTHING";
         try(Connection connection = jdbcTemplate.getDataSource().getConnection();
             PreparedStatement ps = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
 
-            for (int i = 0; i < withoutDublicate.size(); i++) {
+            for (String author : withoutDublicate) {
 
-                String author = withoutDublicate.get(i);
-
-                ps.setString(1, author);
-                ps.setInt(2, forumId);
+                ps.setInt(1, forumId);
+                ps.setString(2, author);
 
                 ps.addBatch();
             }
@@ -135,7 +131,6 @@ public class ThreadService {
         } catch (BatchUpdateException e) {
             //
         }
-
 //          UPDATE COUNT OF POST
         String sqlUpdate = "UPDATE Forum SET posts = posts + ? WHERE id = ?";
         jdbcTemplate.update(sqlUpdate, posts.size(), thread.getForumId());
@@ -143,6 +138,7 @@ public class ThreadService {
         if (ids.get(ids.size() - 1) == 1500000) {
             jdbcTemplate.execute("END TRANSACTION;"
                     + "DROP INDEX IF EXISTS vote_userId_threadId;"
+                    + "DROP INDEX IF EXISTS forumUsers_userId_forumId;"
                     + "VACUUM ANALYZE ForumUsers;"
                     + "VACUUM ANALYZE Post;"
                     + "VACUUM ANALYZE Thread;"
@@ -249,76 +245,65 @@ public class ThreadService {
         Thread thread = getThread(slug_or_id);
 
         int threadId = thread.getId();
-        String descOrAsc = desc ? " DESC" : " ";
+        String descOrAsc = desc ? " DESC" : " ASC";
         String moreOrLess = desc ? " <" : " >";
 
-        final StringBuilder sql = new StringBuilder();
+        final StringBuilder sql = new StringBuilder("SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ?");
         final List<Object> args = new ArrayList<>(4);
+
+        args.add(threadId);
 
         final boolean sinceAndLimit = since != null && limit != null;
 
         switch (sort) {
             case "tree":
-                sql.append("SELECT p1.author, p1.created, p1.forum, p1.id, p1.isEdited, p1.message, p1.parent, p1.thread FROM Post p1");
                 if (sinceAndLimit) {
-                    sql.append(" LEFT JOIN Post p2 on(p2.id = ?)"
-                            + "WHERE p1.thread = ? AND p1.path" + moreOrLess + "p2.path"
-                            + " ORDER BY p1.path" + descOrAsc + " LIMIT ?");
+                    sql.append(" AND path" + moreOrLess + " (SELECT path FROM Post where id = ?)"
+                            + " ORDER BY path" + descOrAsc + " LIMIT ?");
                     args.add(since);
-                    args.add(threadId);
                     args.add(limit);
                 } else if (since != null) {
-                    sql.append(" LEFT JOIN Post p2 on(p2.id = ?)"
-                            + "WHERE p1.thread = ? AND p1.path" + moreOrLess + "p2.path"
-                            + " ORDER BY p1.path" + descOrAsc);
+                    sql.append(" AND path" + moreOrLess + " (SELECT path FROM Post where id = ?)"
+                            + " ORDER BY path" + descOrAsc);
                     args.add(since);
-                    args.add(threadId);
                 } else if (limit != null) {
-                    sql.append(" WHERE p1.thread = ? ORDER BY p1.path" + descOrAsc + " LIMIT ?");
-                    args.add(threadId);
+                    sql.append("ORDER BY path" + descOrAsc + " LIMIT ?");
                     args.add(limit);
                 } else {
-                    sql.append(" WHERE p1.thread = ? ORDER BY p1.path" + descOrAsc);
-                    args.add(threadId);
+                    sql.append(" ORDER BY path" + descOrAsc);
                 }
 
                 break;
             case "parent_tree":
-                sql.append("SELECT p1.author, p1.created, p1.forum, p1.id, p1.isEdited, p1.message, p1.parent, p1.thread FROM Post p1");
                 if (sinceAndLimit) {
-                    sql.append(" JOIN (SELECT p2.id FROM Post p2 LEFT JOIN Post p3 on(p3.id = ?) WHERE p2.thread = ? AND p2.parent = 0 AND p2.id" + moreOrLess + " p3.parentPath ORDER BY p2.id" + descOrAsc + " LIMIT ?) as p"
-                            + " on(p1.parentPath = p.id AND p1.thread = ?) ORDER BY p1.path" + descOrAsc);
+                    sql.append(" AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
+                            + " AND id" + moreOrLess + "(SELECT path1 FROM Post where id = ?)"
+                            + "order by id" + descOrAsc + " LIMIT ?)  ORDER BY path" + descOrAsc);
+                    args.add(threadId);
                     args.add(since);
-                    args.add(threadId);
                     args.add(limit);
-                    args.add(threadId);
-//                    System.out.println(sql.toString());
-//                    System.out.println(args);
+
                 } else if (since != null) {
-//                    sql.append(" LEFT JOIN Post p3 on(p3.id = ?) LEFT JOIN Post p2 on(p1.path[1] = p2.id AND p1.thread = ?)"
-//                            + "WHERE p2.id" + moreOrLess + " p3.path[1] AND p2.thread = ? AND p2.parent = 0"
-//                            + " ORDER BY p1.path" + descOrAsc);
-                    sql.append(" JOIN (SELECT p2.id FROM Post p2 LEFT JOIN Post p3 on(p3.id = ?) WHERE p2.thread = ? AND p2.parent = 0 AND p2.id" + moreOrLess + " p3.parentPath) as p"
-                            + " on(p1.parentPath = p.id AND p1.thread = ?) ORDER BY p1.path" + descOrAsc);
+                    sql.append(" AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
+                            + " AND id" + moreOrLess + "(SELECT path1 FROM Post where id = ?)"
+                            + "order by id" + descOrAsc + ")  ORDER BY path" + descOrAsc);
+                    args.add(threadId);
                     args.add(since);
-                    args.add(threadId);
-                    args.add(threadId);
                 } else if (limit != null) {
-                    sql.append(" JOIN (SELECT id FROM Post WHERE thread = ? AND parent = 0 ORDER BY id" + descOrAsc + " LIMIT ?) as p"
-                            + " on(p1.parentPath = p.id AND p1.thread = ?) ORDER BY p1.path" + descOrAsc);
+                    sql.append(" AND path1 IN (SELECT id FROM Post WHERE parent = 0 AND thread = ?"
+                            + "order by id " + descOrAsc + " LIMIT ?)  ORDER BY path" + descOrAsc);
                     args.add(threadId);
                     args.add(limit);
-                    args.add(threadId);
                 } else {
-                    sql.append(" WHERE p1.thread = ? ORDER BY p1.path" + descOrAsc);
+                    sql.append(" ORDER BY path" + descOrAsc);
                 }
 
                 break;
             default:
-                sql.append("SELECT author, created, forum, id, isEdited, message, parent, thread from Post WHERE thread = ?");
-                args.add(threadId);
                 if (sinceAndLimit) {
-                    sql.append(" AND id" + moreOrLess + " ?" + " ORDER BY id" + descOrAsc + " LIMIT ?");
+                    sql.append(" AND id" + moreOrLess + " ?"
+                            + " ORDER BY id" + descOrAsc
+                            + " LIMIT ?");
                     args.add(since);
                     args.add(limit);
                 } else if (since != null) {
