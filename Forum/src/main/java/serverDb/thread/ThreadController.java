@@ -5,6 +5,7 @@ import serverDb.user.User;
 import serverDb.user.UserService;
 import serverDb.vote.Vote;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,11 +40,16 @@ public class ThreadController {
 
     @PostMapping(path = "/{slug_or_id}/details")
     public ResponseEntity renameThread(@PathVariable("slug_or_id") String slug_or_id, @RequestBody Thread thread) {
+        Thread threadUpdated = new Thread();
         try {
-            return threadService.renameThread(slug_or_id, thread);
+            threadUpdated = threadService.getThread(slug_or_id);
+            return threadService.renameThread(thread, threadUpdated);
 
         } catch (EmptyResultDataAccessException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
+        } catch (DataIntegrityViolationException e) {
+
+            return ResponseEntity.status(HttpStatus.OK).body(threadUpdated);
         }
     }
 

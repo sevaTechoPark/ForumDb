@@ -1,12 +1,9 @@
 package serverDb.thread;
 
 import serverDb.post.Post;
-import serverDb.user.User;
-import serverDb.user.UserService;
 import serverDb.vote.Vote;
 import serverDb.vote.VoteRowMapper;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -174,9 +171,8 @@ public class ThreadService {
         return ResponseEntity.status(HttpStatus.CREATED).body(posts);
     }
 
-    public ResponseEntity renameThread(String slug_or_id, Thread thread) {
-
-        Thread threadUpdated = getThread(slug_or_id);
+    @Transactional
+    public ResponseEntity renameThread(Thread thread, Thread threadUpdated) {
 
         if (thread.getMessage() == null) {
             thread.setMessage(threadUpdated.getMessage());
@@ -190,78 +186,47 @@ public class ThreadService {
             threadUpdated.setTitle(thread.getTitle());
         }
 
-        try {
-
-            int rowsAffected = jdbcTemplate.update("UPDATE Thread SET message = ?, title = ? WHERE id = ?",
-                    thread.getMessage(), thread.getTitle(), threadUpdated.getId());
-            if (rowsAffected == 0) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
-            }
-
-            return ResponseEntity.status(HttpStatus.OK).body(threadUpdated);
-
-        } catch (DataIntegrityViolationException e) {
-
-            return ResponseEntity.status(HttpStatus.OK).body(threadUpdated);
+        int rowsAffected = jdbcTemplate.update("UPDATE Thread SET message = ?, title = ? WHERE id = ?",
+                thread.getMessage(), thread.getTitle(), threadUpdated.getId());
+        if (rowsAffected == 0) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"\"}");
         }
 
+        return ResponseEntity.status(HttpStatus.OK).body(threadUpdated);
     }
 
+    @Transactional
     public ResponseEntity voteThread(String slug_or_id, int currentVoice, int userId) {
 
         Thread thread = getThread(slug_or_id);
 
         int threadId = thread.getId();
 
-        int voiceForUpdate = currentVoice;
-        int existVoteId = -1;
-        boolean flag = false;
-        boolean flagInsert = false;
+        Integer oldVoice = jdbcTemplate.queryForObject("INSERT INTO Vote(userId, voice, threadId) VALUES(?, ?, ?)"
+                + " ON CONFLICT ON CONSTRAINT vote_userId_threadId DO UPDATE set voice = EXCLUDED.voice"
+                + " RETURNING (select voice from vote where userId = ? and threadId = ?)", Integer.class, userId, currentVoice, threadId, userId, threadId);
 
-        try {   // user has voted
+        int voiceForUpdateThread = currentVoice;
 
-             Vote existVote = jdbcTemplate.queryForObject("SELECT voice, id from Vote WHERE userId = ? AND threadId = ?",
-                     VoteRowMapper.INSTANCE, userId, threadId);
-            if (currentVoice == existVote.getVoice()) { // his voice doesn't change
-                return ResponseEntity.status(HttpStatus.OK).body(thread);
+        if (oldVoice == null) { // new vote
+            thread.setVotes(thread.getVotes() + voiceForUpdateThread);
+            jdbcTemplate.update("UPDATE Thread SET votes = votes + ? WHERE id = ?",
+                    currentVoice, threadId);
+            return ResponseEntity.status(HttpStatus.OK).body(thread);
 
-            } else {    // voice changed.
-                existVoteId = existVote.getId();
-                voiceForUpdate = currentVoice * 2;  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
-                flag = true;
-            }
+        } else if (currentVoice == oldVoice) { // his voice doesn't change
+            return ResponseEntity.status(HttpStatus.OK).body(thread);
 
-        } catch (EmptyResultDataAccessException e) {    // user hasn't voted
-
-            flagInsert = true;
+        } else {    // voice changed.
+            voiceForUpdateThread = currentVoice * 2;  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
+            jdbcTemplate.update("UPDATE Thread SET votes = votes + ? WHERE id = ?",
+                    voiceForUpdateThread, threadId);
+            thread.setVotes(thread.getVotes() + voiceForUpdateThread);
+            return ResponseEntity.status(HttpStatus.OK).body(thread);
         }
-
-        if (voiceForUpdate != 0) {
-
-            thread.setVotes(thread.getVotes() + voiceForUpdate);
-        }
-
-        updateVoices(currentVoice, voiceForUpdate, existVoteId, threadId, userId, flag, flagInsert);
-
-        return ResponseEntity.status(HttpStatus.OK).body(thread);
     }
 
     @Transactional
-    public void updateVoices(int currentVoice, int voiceForUpdate, int existVoteId, int threadId, int userId, boolean flag, boolean flagInsert) {
-        if (flagInsert) {
-            jdbcTemplate.update("INSERT INTO Vote(userId, voice, threadId) VALUES(?,?,?)",
-                    userId, currentVoice, threadId);
-        }
-        if (flag) {
-            jdbcTemplate.update("UPDATE Vote SET voice = ? WHERE id = ?",
-                    currentVoice, existVoteId);
-        }
-        if (voiceForUpdate != 0) {
-            jdbcTemplate.update("UPDATE Thread SET votes = votes + ? WHERE id = ?",
-                    voiceForUpdate, threadId);
-        }
-    }
-
     public ResponseEntity getPosts(String slug_or_id, Integer limit, Integer since, String sort, Boolean desc) {
 
         Thread thread = getThread(slug_or_id);
