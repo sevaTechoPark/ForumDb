@@ -3,8 +3,6 @@ package serverDb.post;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.sql.Timestamp;
 
@@ -108,20 +106,4 @@ public class Post {
         this.thread = thread;
     }
 
-    @JsonIgnore
-    public ObjectNode getJson(){
-        final ObjectMapper map = new ObjectMapper();
-        final ObjectNode node = map.createObjectNode();
-
-        node.put("id", this.id);
-        node.put("forum", this.forum);
-        node.put("author", this.author);
-        node.put("thread", this.thread);
-        node.put("created", this.created.toInstant().toString());
-        node.put("isEdited", this.isEdited);
-        node.put("message", this.message);
-        node.put("parent", this.parent);
-
-        return node;
-    }
 }

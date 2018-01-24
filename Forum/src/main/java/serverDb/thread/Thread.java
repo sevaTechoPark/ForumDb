@@ -3,8 +3,6 @@ package serverDb.thread;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
@@ -123,20 +121,4 @@ public class Thread {
         this.votes = votes;
     }
 
-    @JsonIgnore
-    public ObjectNode getJson(){
-        final ObjectMapper map = new ObjectMapper();
-        final ObjectNode node = map.createObjectNode();
-
-        node.put("author", this.author);
-        node.put("created", this.created.toInstant().toString());
-        node.put("forum", this.forum);
-        node.put("id", this.id);
-        node.put("message", this.message);
-        node.put("title", this.title);
-        node.put("slug", this.slug);
-        node.put("votes", this.votes);
-
-        return node;
-    }
 }
