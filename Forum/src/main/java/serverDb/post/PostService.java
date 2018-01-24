@@ -52,7 +52,7 @@ public class PostService {
 
         if (Arrays.asList(related).contains("user")) {
 
-            responseBody.set("author", jdbcTemplate.queryForObject("SELECT nickname, fullname, about, email from FUser WHERE nickname = ?",
+            responseBody.set("author", jdbcTemplate.queryForObject("SELECT nickname, email, fullname, about from FUser WHERE nickname = ?",
                     serverDb.fasterMappers.UserRowMapper.INSTANCE, post.getAuthor())
                     .getJson());
         }

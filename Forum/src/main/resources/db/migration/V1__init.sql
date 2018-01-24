@@ -22,8 +22,6 @@ CREATE TABLE Forum(
   FOREIGN KEY (userId) REFERENCES FUser(id)
 );
 
-CREATE INDEX forum_covering ON Forum(slug, id, userId, "user", posts, threads, title);
-
 CREATE TABLE Thread(
   id SERIAL4 PRIMARY KEY,
   forum text,
@@ -73,7 +71,7 @@ CREATE TABLE Vote(
   userId int4,
   threadId int4,
   voice int2 DEFAULT 0,
-  CONSTRAINT vote_userId_threadId unique (userId, threadId)
+  CONSTRAINT vote_userId_threadId UNIQUE (userId, threadId)
 );
 
 CREATE TABLE ForumUsers(
