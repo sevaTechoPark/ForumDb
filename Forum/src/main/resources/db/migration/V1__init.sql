@@ -9,7 +9,7 @@ CREATE TABLE FUser(
   about text
 );
 
-CREATE INDEX fuser_covering ON FUser(nickname, id, email, fullname, about);
+-- CREATE INDEX fuser_covering ON FUser(nickname, id, email, fullname, about);
 
 CREATE TABLE Forum(
   id SERIAL4 PRIMARY KEY,
