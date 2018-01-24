@@ -1,8 +1,6 @@
 package serverDb.thread;
 
 import serverDb.post.Post;
-import serverDb.vote.Vote;
-import serverDb.vote.VoteRowMapper;
 
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
