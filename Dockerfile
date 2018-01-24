@@ -21,7 +21,6 @@ RUN echo "listen_addresses='*'" >> /etc/postgresql/$PGVER/main/postgresql.conf \
 && echo "work_mem = 4MB" >> /etc/postgresql/$PGVER/main/postgresql.conf \
 && echo "fsync = off" >> /etc/postgresql/$PGVER/main/postgresql.conf \
 && echo "full_page_writes = false" >> /etc/postgresql/$PGVER/main/postgresql.conf \
-&& echo "maintenance_work_mem = 256MB" >> /etc/postgresql/$PGVER/main/postgresql.conf \
 && echo "effective_cache_size = 256MB" >> /etc/postgresql/$PGVER/main/postgresql.conf \
 && echo "unix_socket_directories = '/var/run/postgresql/'" >> /etc/postgresql/$PGVER/main/postgresql.conf \
 && echo "logging_collector = off" >> /etc/postgresql/$PGVER/main/postgresql.conf
