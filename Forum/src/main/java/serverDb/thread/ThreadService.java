@@ -212,18 +212,15 @@ public class ThreadService {
             thread.setVotes(thread.getVotes() + voiceForUpdateThread);
             jdbcTemplate.update("UPDATE Thread SET votes = votes + ? WHERE id = ?",
                     currentVoice, threadId);
-            return ResponseEntity.status(HttpStatus.OK).body(thread);
 
-        } else if (currentVoice == oldVoice) { // his voice doesn't change
-            return ResponseEntity.status(HttpStatus.OK).body(thread);
-
-        } else {    // voice changed.
-            voiceForUpdateThread = currentVoice * 2;  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
+        } else if (currentVoice != oldVoice) {    // voice changed.
+            voiceForUpdateThread *= 2;  // for example: was -1 become 1. that means we must plus 2 or -1 * (-2)
             jdbcTemplate.update("UPDATE Thread SET votes = votes + ? WHERE id = ?",
                     voiceForUpdateThread, threadId);
             thread.setVotes(thread.getVotes() + voiceForUpdateThread);
-            return ResponseEntity.status(HttpStatus.OK).body(thread);
         }
+
+        return ResponseEntity.status(HttpStatus.OK).body(thread);
     }
 
     @Transactional
