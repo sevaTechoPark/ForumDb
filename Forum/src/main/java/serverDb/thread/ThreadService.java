@@ -166,8 +166,9 @@ public class ThreadService {
             jdbcTemplate.execute("END TRANSACTION;"
                     + "DROP INDEX IF EXISTS forumUsers_userId_forumId;"
                     + "DROP TABLE IF EXISTS Vote;"
-                    + "REINDEX DATABASE docker;"
                     + "CLUSTER Thread USING thread_forumId_created;"
+                    + "CLUSTER ForumUsers USING forumUsers_forumId_nickname;"
+                    + "REINDEX DATABASE docker;"
                     + "VACUUM ANALYZE;");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(posts);
