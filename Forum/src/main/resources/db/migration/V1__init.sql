@@ -9,16 +9,20 @@ CREATE TABLE FUser(
   about text
 );
 
+CREATE INDEX fuser_covering ON FUser(nickname, id, email, fullname, about);
+
 CREATE TABLE Forum(
   id SERIAL4 PRIMARY KEY,
   slug citext COLLATE "ucs_basic" NOT NULL UNIQUE,
-  "user" citext,
+  "user" text,
   userId int4,
   posts int4 DEFAULT 0,
   threads int4 DEFAULT 0,
   title text NOT NULL,
   FOREIGN KEY (userId) REFERENCES FUser(id)
 );
+
+CREATE INDEX forum_covering ON Forum(slug, id, userId, "user", posts, threads, title);
 
 CREATE TABLE Thread(
   id SERIAL4 PRIMARY KEY,
@@ -61,7 +65,7 @@ CREATE INDEX post_thread_id ON Post(thread, id); -- 1907
 CREATE INDEX post_thread_path ON Post(thread, path); -- 2387
 -- parent_tree
 CREATE INDEX post_thread_path1 ON Post(thread, path1); -- 2063
-CREATE INDEX post_id_path1 ON Post(id, path1);
+CREATE INDEX post_id_path1 ON Post(id, path1); -- 2980
 CREATE INDEX posts_thread_id ON Post(thread, id) WHERE parent = 0;
 
 CREATE TABLE Vote(

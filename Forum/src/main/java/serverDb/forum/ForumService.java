@@ -129,7 +129,7 @@ public class ForumService {
 
     public Forum getForum(String slug) {
 
-        return jdbcTemplate.queryForObject("SELECT * from Forum WHERE slug::citext = ?::citext",
+        return jdbcTemplate.queryForObject("SELECT slug, id, userId, \"user\", posts, threads, title from Forum WHERE slug::citext = ?::citext",
                 ForumRowMapper.INSTANCE, slug);
     }
 }

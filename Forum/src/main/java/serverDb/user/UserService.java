@@ -52,7 +52,7 @@ public class UserService{
 
     public User getUser(String nickname) {
 
-        return jdbcTemplate.queryForObject("SELECT * from FUser WHERE  nickname::citext = ?::citext",
+        return jdbcTemplate.queryForObject("SELECT nickname, id, email, fullname, about from FUser WHERE  nickname::citext = ?::citext",
                 UserRowMapper.INSTANCE, nickname);
     }
 }
