@@ -1,12 +1,6 @@
 package serverDb.post;
 
-import serverDb.forum.Forum;
-import serverDb.thread.Thread;
-import serverDb.user.User;
-
 import org.springframework.transaction.annotation.Transactional;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
@@ -36,37 +30,25 @@ public class PostService {
 
     public ResponseEntity getPost(int id, String[] related) {
 
-        final ObjectMapper map = new ObjectMapper();
-        final ObjectNode responseBody = map.createObjectNode();
-
         Post post = findPost(id);
-
-        responseBody.set("post", post.getJson());
+        PostFull postFull = new PostFull(post);
 
         if (Arrays.asList(related).contains("thread")) {
-
-            responseBody.set("thread", jdbcTemplate.queryForObject("SELECT author, forum, id, message, slug, title, votes, created from Thread WHERE id = ?",
-                    serverDb.fasterMappers.ThreadRowMapper.INSTANCE, post.getThread())
-                    .getJson());
+            postFull.setThread(jdbcTemplate.queryForObject("SELECT author, forum, id, message, slug, title, votes, created FROM Thread WHERE id = ?",
+                    serverDb.fasterMappers.ThreadRowMapper.INSTANCE, post.getThread()));
         }
 
         if (Arrays.asList(related).contains("user")) {
-
-            responseBody.set("author", jdbcTemplate.queryForObject("SELECT nickname, email, fullname, about from FUser WHERE nickname = ?",
-                    serverDb.fasterMappers.UserRowMapper.INSTANCE, post.getAuthor())
-                    .getJson());
+            postFull.setAuthor(jdbcTemplate.queryForObject("SELECT nickname, email, fullname, about FROM FUser WHERE nickname = ?",
+                    serverDb.fasterMappers.UserRowMapper.INSTANCE, post.getAuthor()));
         }
 
         if (Arrays.asList(related).contains("forum")) {
-
-            responseBody.set("forum", jdbcTemplate.queryForObject("SELECT posts, slug, threads, title, \"user\" from Forum WHERE id = ?",
-                    serverDb.fasterMappers.ForumRowMapper.INSTANCE,
-                    post.getForumId())
-                    .getJson());
-
+            postFull.setForum(jdbcTemplate.queryForObject("SELECT posts, slug, threads, title, \"user\" FROM Forum WHERE id = ?",
+                    serverDb.fasterMappers.ForumRowMapper.INSTANCE, post.getForumId()));
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(responseBody);
+        return ResponseEntity.status(HttpStatus.OK).body(postFull);
     }
 
     public Post findPost(int id) {
