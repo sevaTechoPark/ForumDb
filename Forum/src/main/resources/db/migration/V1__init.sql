@@ -57,7 +57,7 @@ CREATE TABLE Post(
 -- flat
 CREATE INDEX post_id_path ON Post(id, path); -- 2984
 -- tree
-CREATE INDEX post_thread_id ON Post(thread, id);
+CREATE INDEX post_thread_id ON Post(thread, id); -- 1907
 CREATE INDEX post_thread_path ON Post(thread, path); -- 2387
 -- parent_tree
 CREATE INDEX post_thread_path1 ON Post(thread, path1); -- 2063
