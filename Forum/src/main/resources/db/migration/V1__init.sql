@@ -14,8 +14,8 @@ CREATE TABLE Forum(
   slug citext COLLATE "ucs_basic" NOT NULL UNIQUE,
   "user" citext,
   userId int4,
-  posts INT8 DEFAULT 0,
-  threads INT4 DEFAULT 0,
+  posts int4 DEFAULT 0,
+  threads int4 DEFAULT 0,
   title text NOT NULL,
   FOREIGN KEY (userId) REFERENCES FUser(id)
 );
@@ -47,8 +47,8 @@ CREATE TABLE Post(
   isEdited bool DEFAULT false NOT NULL,
   message text NOT NULL,
   path int4[] NOT NULL,
-  parent INT4 NOT NULL DEFAULT 0,
-  path1 INT4 NOT NULL,
+  parent int4 NOT NULL DEFAULT 0,
+  path1 int4 NOT NULL,
   FOREIGN KEY (author) REFERENCES FUser(nickname),
   FOREIGN KEY (thread) REFERENCES Thread(id),
   FOREIGN KEY (forumId) REFERENCES Forum(id)
