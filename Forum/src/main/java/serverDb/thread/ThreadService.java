@@ -165,7 +165,7 @@ public class ThreadService {
                     + "DROP TABLE IF EXISTS Vote;"
                     + "CLUSTER Thread USING thread_forumId_created;"
                     + "CLUSTER ForumUsers USING forumUsers_forumId_nickname;"
-                    + "CLUSTER Post USING post_id_path;"
+                    + "CLUSTER Post USING post_thread_id;"
                     + "REINDEX DATABASE docker;"
                     + "VACUUM ANALYZE;");
         }
