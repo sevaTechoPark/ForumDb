@@ -17,7 +17,7 @@ public class AppConfig {
         config.setUsername("docker");
         config.setPassword("docker");
         config.setDriverClassName("org.postgresql.Driver");
-        config.setMaximumPoolSize(8);
+        config.setMaximumPoolSize(10);
         config.setConnectionTimeout(3000);
         config.setValidationTimeout(1000);
 

@@ -73,8 +73,6 @@ CREATE TABLE Vote(
   userId int4,
   threadId int4,
   voice int2 DEFAULT 0,
-  FOREIGN KEY (userId) REFERENCES FUser(id),
-  FOREIGN KEY (threadId) REFERENCES Thread(id),
   CONSTRAINT vote_userId_threadId unique (userId, threadId)
 );
 

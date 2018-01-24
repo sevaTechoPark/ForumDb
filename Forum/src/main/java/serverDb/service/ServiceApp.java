@@ -17,7 +17,7 @@ public class ServiceApp {
 
     public ResponseEntity clearDatabase() {
 
-        jdbcTemplate.update("TRUNCATE TABLE ForumUsers, Post, Vote, Thread, Forum, FUser RESTART IDENTITY");
+        jdbcTemplate.update("TRUNCATE TABLE ForumUsers, Post, Thread, Forum, FUser RESTART IDENTITY");
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
