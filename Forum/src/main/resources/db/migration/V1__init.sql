@@ -57,14 +57,14 @@ CREATE TABLE Post(
 );
 
 -- flat
-CREATE INDEX post_id_path ON Post(id, path); -- 2984
+CREATE INDEX post_id_path ON Post(id, path);
 -- tree
-CREATE INDEX post_thread_id ON Post(thread, id); -- 1907
-CREATE INDEX post_thread_path ON Post(thread, path); -- 2387
+CREATE INDEX post_thread_id ON Post(thread, id);
+CREATE INDEX post_thread_path ON Post(thread, path);
 -- parent_tree
-CREATE INDEX post_thread_path1 ON Post(thread, path1); -- 2063
-CREATE INDEX post_id_path1 ON Post(id, path1); -- 2980
-CREATE INDEX posts_thread_id ON Post(thread, id) WHERE parent = 0;
+CREATE INDEX post_thread_path1 ON Post(thread, path1);
+CREATE INDEX post_id_path1 ON Post(id, path1);
+CREATE INDEX posts_thread_id_path ON Post(thread, id, path1) WHERE parent = 0;
 
 CREATE TABLE Vote(
   id SERIAL4 PRIMARY KEY,
@@ -86,13 +86,17 @@ CREATE TABLE ForumUsers(
 CREATE UNIQUE INDEX forumUsers_userId_forumId ON ForumUsers(userId, forumId);
 CREATE INDEX forumUsers_forumId_nickname ON ForumUsers(forumId, nickname);
 
+-- CREATE INDEX post_test ON Post(thread, id); -- 1907
 -- CREATE INDEX post_test ON Post(thread, id, path1, path); 2918
 -- CREATE INDEX post_test ON Post(thread, id, path1); 2979
 -- CREATE INDEX post_test ON Post(thread, id, path); 3063
 -- CREATE INDEX post_test ON Post(thread, id, path, path1);
+-- CREATE INDEX post_test ON Post(thread, path); -- 2387
 -- CREATE INDEX post_test ON Post(thread, path, id); 2937
+-- CREATE INDEX post_test ON Post(thread, path1); -- 2063
 -- CREATE INDEX post_test ON Post(thread, path1, path); 2918
 -- CREATE INDEX post_test ON Post(thread, path1, path, id); 2851
-CREATE INDEX post_test ON Post(thread, path1, path, id);
 -- CREATE INDEX post_test ON Post(path1, thread, id); 2990
 -- CREATE INDEX post_test ON Post(path1, path, id);
+-- CREATE INDEX post_test ON Post(id, path); -- 2984
+-- CREATE INDEX post_test ON Post(id, path1); -- 2980
