@@ -64,7 +64,7 @@ CREATE INDEX post_thread_path ON Post(thread, path);
 -- parent_tree
 CREATE INDEX post_thread_path1 ON Post(thread, path1);
 CREATE INDEX post_id_path1 ON Post(id, path1);
-CREATE INDEX posts_thread_id_path ON Post(thread, id, path1) WHERE parent = 0;
+CREATE INDEX posts_thread_id_path1 ON Post(thread, id, path1) WHERE parent = 0;
 
 CREATE TABLE Vote(
   id SERIAL4 PRIMARY KEY,

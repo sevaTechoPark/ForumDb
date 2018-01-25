@@ -163,7 +163,7 @@ public class ThreadService {
             jdbcTemplate.execute("DROP TABLE IF EXISTS Vote");
             jdbcTemplate.execute("CLUSTER Thread USING thread_forumId_created");
             jdbcTemplate.execute("CLUSTER ForumUsers USING forumUsers_forumId_nickname");
-//            jdbcTemplate.execute("CLUSTER Post USING post_test;");
+//            jdbcTemplate.execute("CLUSTER Post USING post_test");
             jdbcTemplate.execute("REINDEX DATABASE docker");
             jdbcTemplate.execute("VACUUM ANALYZE");
         }
