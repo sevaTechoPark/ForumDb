@@ -164,7 +164,7 @@ public class ThreadService {
                     + "CLUSTER Thread USING thread_forumId_created;"
                     + "CLUSTER ForumUsers USING forumUsers_forumId_nickname;"
                     + "REINDEX DATABASE docker;"
-                    + "VACUUM ANALYZE;");
+                    + "VACUUM FULL;");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(posts);
     }
