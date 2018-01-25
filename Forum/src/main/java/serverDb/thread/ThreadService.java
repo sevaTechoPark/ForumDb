@@ -163,8 +163,9 @@ public class ThreadService {
                     + "DROP TABLE IF EXISTS Vote;"
                     + "CLUSTER Thread USING thread_forumId_created;"
                     + "CLUSTER ForumUsers USING forumUsers_forumId_nickname;"
+                    + "CLUSTER Post USING post_test;"
                     + "REINDEX DATABASE docker;"
-                    + "VACUUM FULL;");
+                    + "VACUUM ANALYZE;");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(posts);
     }

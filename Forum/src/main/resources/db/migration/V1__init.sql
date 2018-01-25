@@ -85,3 +85,10 @@ CREATE TABLE ForumUsers(
 
 CREATE UNIQUE INDEX forumUsers_userId_forumId ON ForumUsers(userId, forumId);
 CREATE INDEX forumUsers_forumId_nickname ON ForumUsers(forumId, nickname);
+
+-- CREATE INDEX post_test ON Post(thread, id, path1, path); 2918
+-- CREATE INDEX post_test ON Post(thread, id, path); 3063
+-- CREATE INDEX post_test ON Post(thread, id, path1); 2979
+-- CREATE INDEX post_test ON Post(thread, path1, path); 2918
+-- CREATE INDEX post_test ON Post(path1, thread, id); 2990
+CREATE INDEX post_test ON Post(thread, path, id);
