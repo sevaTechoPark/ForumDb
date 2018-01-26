@@ -1,9 +1,9 @@
-FROM ubuntu:16.04
+FROM ubuntu:17.10
 
 RUN apt-get -y update
 
-ENV PGVER 9.5
-RUN apt-get install -y postgresql-$PGVER
+ENV PGVER 9.6
+RUN apt-get install -y postgresql-$PGVER wget git
 
 USER postgres
 
@@ -16,7 +16,7 @@ RUN echo "host all  all    0.0.0.0/0  md5" >> /etc/postgresql/$PGVER/main/pg_hba
 
 RUN echo "listen_addresses='*'" >> /etc/postgresql/$PGVER/main/postgresql.conf \
 && echo "synchronous_commit=off" >> /etc/postgresql/$PGVER/main/postgresql.conf \
-&& echo "shared_buffers = 16MB" >> /etc/postgresql/$PGVER/main/postgresql.conf \
+&& echo "shared_buffers = 8MB" >> /etc/postgresql/$PGVER/main/postgresql.conf \
 && echo "max_wal_size = 1GB" >> /etc/postgresql/$PGVER/main/postgresql.conf \
 && echo "work_mem = 4MB" >> /etc/postgresql/$PGVER/main/postgresql.conf \
 && echo "fsync = off" >> /etc/postgresql/$PGVER/main/postgresql.conf \
@@ -42,4 +42,4 @@ RUN mvn package
 
 EXPOSE 5000
 
-CMD service postgresql start && java -Xmx300M -Xss256k -XX:-TieredCompilation -XX:CICompilerCount=1 -XX:+UseSerialGC -XX:VMThreadStackSize=256 -XX:InitialCodeCacheSize=4096 -XX:InitialBootClassLoaderMetaspaceSize=4096 -jar target/Forum-1.0-SNAPSHOT.jar
+CMD service postgresql start && java -Xmx300M -Xms300M -Xss256k -XX:-TieredCompilation -XX:CICompilerCount=1 -XX:+UseSerialGC -XX:VMThreadStackSize=256 -XX:InitialCodeCacheSize=4096 -XX:InitialBootClassLoaderMetaspaceSize=4096 -jar target/Forum-1.0-SNAPSHOT.jar

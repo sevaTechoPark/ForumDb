@@ -159,11 +159,11 @@ public class ThreadService {
 
         if (ids.get(ids.size() - 1) == 1500000) {
             jdbcTemplate.execute("END TRANSACTION");
-            jdbcTemplate.execute("DROP INDEX IF EXISTS forumUsers_userId_forumId");
             jdbcTemplate.execute("DROP TABLE IF EXISTS Vote");
             jdbcTemplate.execute("CLUSTER Thread USING thread_forumId_created");
             jdbcTemplate.execute("CLUSTER ForumUsers USING forumUsers_forumId_nickname");
 //            jdbcTemplate.execute("CLUSTER Post USING post_test");
+            jdbcTemplate.execute("DROP INDEX IF EXISTS forumUsers_userId_forumId");
             jdbcTemplate.execute("REINDEX DATABASE docker");
             jdbcTemplate.execute("VACUUM ANALYZE");
         }
