@@ -90,13 +90,14 @@ CREATE INDEX forumUsers_forumId_nickname ON ForumUsers(forumId, nickname);
 -- CREATE INDEX post_test ON Post(thread, id, path1, path); 2918
 -- CREATE INDEX post_test ON Post(thread, id, path1); 2979
 -- CREATE INDEX post_test ON Post(thread, id, path); 3063
--- CREATE INDEX post_test ON Post(thread, id, path, path1);
+-- CREATE INDEX post_test ON Post(thread, id, path, path1); 2819
 -- CREATE INDEX post_test ON Post(thread, path); -- 2387
 -- CREATE INDEX post_test ON Post(thread, path, id); 2937
 -- CREATE INDEX post_test ON Post(thread, path1); -- 2063
 -- CREATE INDEX post_test ON Post(thread, path1, path); 2918
 -- CREATE INDEX post_test ON Post(thread, path1, path, id); 2851
 -- CREATE INDEX post_test ON Post(path1, thread, id); 2990
--- CREATE INDEX post_test ON Post(path1, path, id);
+-- CREATE INDEX post_test ON Post(path1, thread, id, path); 
+-- CREATE INDEX post_test ON Post(path1, path, id); 2900
 -- CREATE INDEX post_test ON Post(id, path); -- 2984
 -- CREATE INDEX post_test ON Post(id, path1); -- 2980
