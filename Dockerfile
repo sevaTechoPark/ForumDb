@@ -40,6 +40,6 @@ WORKDIR $WORK
 
 RUN mvn package
 
-EXPOSE 5000
+EXPOSE 80
 
 CMD service postgresql start && java -Xmx300M -Xms300M -Xss256k -XX:-TieredCompilation -XX:CICompilerCount=1 -XX:+UseSerialGC -XX:VMThreadStackSize=256 -XX:InitialCodeCacheSize=4096 -XX:InitialBootClassLoaderMetaspaceSize=4096 -jar target/Forum-1.0-SNAPSHOT.jar
